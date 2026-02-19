@@ -1,54 +1,54 @@
-# 🚀 EventTrip.ai — MVP Timeline
+# EventTrip.ai MVP Timeline
 
 ## Timeline (1 Developer, 7 Weeks)
 
-### Week 1-2: Foundation
-- [ ] Next.js project setup + Tailwind
-- [ ] Supabase project (auth, DB)
-- [ ] Database migrations (events, trips, cache)
-- [ ] Seed curated events DB (top 50 EU festivals)
-- [ ] Ticketmaster API integration
-- [ ] Basic event search + event detail page
+### Week 1-2: Template Baseline + Data Foundation
+- [ ] Bootstrap from `vercel/ai-chatbot` template
+- [ ] Remove non-MVP template features
+- [ ] Configure Vercel environments and required secrets
+- [ ] Set up Supabase Postgres and base migrations
+- [ ] Add CI baseline (typecheck, lint, unit tests)
+- [ ] Establish core API error envelope and response contracts
 
-### Week 3-4: Travel APIs + AI
-- [ ] Travelpayouts Flights API integration
-- [ ] Travelpayouts Hotels API integration
-- [ ] Search caching layer
-- [ ] AI Intent Parser (Claude/GPT)
-- [ ] Package Builder (Budget/Best/Premium)
-- [ ] AI Summary generation
+### Week 3-4: Intent + Data Providers + Package Engine
+- [ ] AI SDK intent parsing with strict schema validation
+- [ ] Missing-field follow-up flow
+- [ ] Event resolution across Ticketmaster, SeatGeek, curated index
+- [ ] Travel collectors (flight + hotel) with timeout controls
+- [ ] Deterministic package ranking (`Budget`, `Best Value`, `Premium`)
+- [ ] Over-budget fallback and annotations
 
-### Week 5: Trip Builder UI
-- [ ] Trip builder page (full breakdown)
-- [ ] Flight results component
-- [ ] Hotel results component
-- [ ] Package selector (3 tiers)
-- [ ] Affiliate link tracking
-- [ ] Save trip functionality
+### Week 5: Product UX and Reliability
+- [ ] Smart prompt UI and conversation state model
+- [ ] Event disambiguation picker UI
+- [ ] Package result cards with line-item pricing
+- [ ] Outbound booking link tracking
+- [ ] Observability logs for parse, provider latency, and package generation
+- [ ] Request deadline and graceful fallback states
 
-### Week 6: Polish + Group Features
-- [ ] Landing page design
-- [ ] Explore/browse events page
-- [ ] Share trip via link
-- [ ] Basic group invite (email)
-- [ ] Mobile responsive
-- [ ] SEO meta tags
+### Week 6: Hardening and Launch Readiness
+- [ ] Regression suite for core prompt-to-package flow
+- [ ] Production smoke checks and rollback notes
+- [ ] SEO metadata and sharing previews
+- [ ] Funnel analytics events
+- [ ] Performance pass (P95 within target budget)
+- [ ] Preview and production deployment verification
 
-### Week 7: Launch Prep
-- [ ] Stripe integration (group features)
-- [ ] Analytics (affiliate clicks tracking)
-- [ ] Error handling + loading states
-- [ ] Testing
-- [ ] Deploy to Vercel
-- [ ] 🚀 **LAUNCH**
+### Week 7: Launch Week
+- [ ] Final bug triage and blocker burn-down
+- [ ] Validate outbound links and affiliate instrumentation
+- [ ] Freeze MVP scope and close remaining must-have issues
+- [ ] Launch decision review
+- [ ] Publish and monitor first 48h
+- [ ] Launch retrospective
 
 ## Launch Strategy
 
-1. **ProductHunt** — безплатно, голям reach
-2. **Reddit** — r/festivals, r/travel, r/solotravel, r/formula1
-3. **TikTok/Reels** — "I planned my Tomorrowland trip in 30 seconds"
-4. **SEO** — "how to get to Tomorrowland", "EXIT festival travel guide"
-5. **Festival communities** — Facebook groups, Discord servers
+1. ProductHunt
+2. Reddit (`r/festivals`, `r/travel`, `r/solotravel`, `r/formula1`)
+3. TikTok/Reels short demos
+4. SEO pages for high-intent event travel searches
+5. Festival communities (Facebook/Discord)
 
 ## Startup Costs (Monthly)
 
@@ -57,29 +57,17 @@ Ticketmaster API:     Free
 SeatGeek API:         Free
 Travelpayouts:        Free
 Booking.com API:      Free (after approval)
-SerpApi:              Free (100 calls/м)
 Google Maps:          $0-5
-OpenAI API:           $50-100
-Supabase:             Free tier
-Vercel:               Free tier
-Domain:               $1/м
+AI API usage:         $50-150
+Supabase:             Free tier to start
+Vercel:               Free tier to start
+Domain:               $1/month
 ─────────────────────
-TOTAL:                ~$50-100/м
+TOTAL:                ~$50-160/month
 ```
 
-## MVP Scope — Start with Music Festivals in Europe
+## MVP Scope Notes
 
-### Why:
-- Highest passion/urgency (tickets sell out fast)
-- Strong communities (easy marketing)
-- Clear seasonality (plan in winter, attend in summer)
-- High AOV (€500-2000 per trip)
-
-### Initial Curated Events (50):
-Tomorrowland, EXIT, Sziget, Primavera Sound, Sonar, Rock Werchter, 
-Glastonbury, Reading/Leeds, Creamfields, Untold, Electric Castle,
-Hideout, Outlook, Dimensions, Melt, Fusion, Roskilde, Way Out West,
-Flow Festival, Pukkelpop, Lowlands, Dour, NOS Alive, Mad Cool,
-Benicassim, Ultra Europe, Sea Dance, Love Fest, Meadows in the Mountains,
-and more...
-```
+- Keep anonymous-first experience for MVP.
+- Do not add save/share/group checkout features before launch.
+- Preserve deterministic package logic; use AI only where NLP is needed.
