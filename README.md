@@ -57,6 +57,8 @@ pnpm install
 - `AI_GATEWAY_API_KEY` (if not running on Vercel with OIDC)
 - `POSTGRES_URL` (Supabase pooled connection string)
 - `REDIS_URL` (optional for stream resume)
+- `EVENTTRIP_INTENT_PRIMARY_MODEL` (optional override for parse-intent model)
+- `EVENTTRIP_INTENT_FALLBACK_MODEL` (optional parse-intent fallback model)
 3. Run migrations and dev server:
 
 ```bash

@@ -25,9 +25,10 @@ import {
   updateChatTitleById,
   updateMessage,
 } from "@/lib/db/queries";
-import { runEventTripPipeline } from "@/lib/eventtrip/pipeline/run-eventtrip-pipeline";
 import type { DBMessage } from "@/lib/db/schema";
 import { ChatSDKError } from "@/lib/errors";
+import { resolveIntentModelIds } from "@/lib/eventtrip/intent/model-routing";
+import { runEventTripPipeline } from "@/lib/eventtrip/pipeline/run-eventtrip-pipeline";
 import type { ChatMessage } from "@/lib/types";
 import { convertToUIMessages, generateUUID } from "@/lib/utils";
 import { generateTitleFromUserMessage } from "../../actions";
@@ -129,9 +130,17 @@ export async function POST(request: Request) {
     }
 
     if (!isToolApprovalFlow && message?.role === "user") {
+      const { primaryModelId, fallbackModelId } = resolveIntentModelIds({
+        selectedChatModel,
+        env: process.env,
+      });
+
       const intentGateResult = await buildIntentGateResult({
         message,
-        model: getLanguageModel(selectedChatModel),
+        model: getLanguageModel(primaryModelId),
+        fallbackModel: fallbackModelId
+          ? getLanguageModel(fallbackModelId)
+          : undefined,
       });
 
       if (

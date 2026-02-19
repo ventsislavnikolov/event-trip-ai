@@ -15,7 +15,10 @@ type UserMessageLike = {
 type BuildIntentGateResultParams = {
   message: UserMessageLike | undefined;
   model: LanguageModel;
-  generateObjectFn?: Parameters<typeof parseIntentFromText>[0]["generateObjectFn"];
+  fallbackModel?: LanguageModel;
+  generateObjectFn?: Parameters<
+    typeof parseIntentFromText
+  >[0]["generateObjectFn"];
 };
 
 function extractUserText(message: UserMessageLike | undefined): string {
@@ -34,6 +37,7 @@ function extractUserText(message: UserMessageLike | undefined): string {
 export async function buildIntentGateResult({
   message,
   model,
+  fallbackModel,
   generateObjectFn,
 }: BuildIntentGateResultParams): Promise<{
   shouldInterrupt: boolean;
@@ -53,6 +57,7 @@ export async function buildIntentGateResult({
   const parsed = await parseIntentFromText({
     text,
     model,
+    fallbackModel,
     generateObjectFn,
   });
 

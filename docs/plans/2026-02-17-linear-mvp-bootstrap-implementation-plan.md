@@ -1,5 +1,7 @@
 # Linear MVP Bootstrap Implementation Plan
 
+> Superseded on 2026-02-19 by `docs/plans/2026-02-19-chat-sdk-supabase-implementation-plan.md`.
+
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
 **Goal:** Build a repeatable, tested workflow that creates all required Linear artifacts for EventTrip.ai MVP (project, milestones, labels, and initial issue backlog) from a repository-managed seed file.

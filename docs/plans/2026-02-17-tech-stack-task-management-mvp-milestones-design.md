@@ -22,31 +22,30 @@ Topic: Solo founder + Codex delivery system (feature-complete MVP)
 ## 2) Recommended Tech Stack Blueprint
 
 ### Application platform
-- Frontend + backend: Next.js (App Router) + TypeScript
+- Baseline app: `vercel/ai-chatbot` template (Next.js App Router + TypeScript + Vercel AI SDK)
 - Database: Supabase (PostgreSQL)
 - Hosting: Vercel
 - Styling/UI: Tailwind CSS + component library as needed
 
-This stack is optimized for speed of execution, low ops burden, and strong deployment workflow for a solo builder.
+This stack is optimized for speed of execution, low ops burden, and strong deployment workflow for a solo builder by reusing a production-grade starter instead of rebuilding chat/runtime infrastructure.
 
 ### AI architecture (provider-agnostic)
-Implement a thin internal AI adapter layer in `src/lib/ai/`.
+Use Vercel AI SDK primitives for model calls/streaming and keep a minimal EventTrip domain layer in `lib/eventtrip/`.
 
-Stable internal interface:
+Domain interfaces:
 - `parseIntent(prompt) -> ParsedIntent`
-- `rankEventMatches(query, candidates) -> RankedCandidates`
-- optional `summarizePackages(packages) -> string`
+- `resolveEventCandidates(query) -> EventCandidate[]`
+- `buildPackages(input) -> RankedPackages`
 
-Provider adapters:
-- `openai.adapter.ts`
-- `anthropic.adapter.ts`
-- `index.ts` for provider routing via environment config
+MVP rule:
+- do not build a heavy multi-provider abstraction before launch
+- allow model routing by env config only if needed for reliability/cost controls
 
 Key rule:
 - AI handles natural-language edges only (intent parsing, disambiguation help)
 - Business logic remains deterministic (package generation/ranking in code)
 
-This gives flexibility to switch providers without refactoring product logic.
+This keeps the MVP flexible enough while avoiding premature architecture.
 
 ### Data and integrations
 - Event providers: Ticketmaster + SeatGeek + curated EU DB
@@ -98,22 +97,22 @@ Every issue must include:
 Goal: baseline app + delivery pipeline
 
 Deliverables:
-- Next.js project baseline
+- Bootstrap from `vercel/ai-chatbot` template
+- Remove non-MVP template features and keep only required chat flow surface
 - Supabase project and initial migrations
 - Vercel env setup
-- Linear project + milestone + issue templates
 - CI baseline (typecheck/lint/test scaffold)
 
 Exit criteria:
 - app runs locally and on preview
 - migrations apply cleanly
-- Linear workflow is operational
+- core template shell is aligned with EventTrip MVP scope
 
 ### M2: Intent Parsing and Event Resolution
 Goal: prompt -> validated trip request -> selected event
 
 Deliverables:
-- AI adapter interface + provider adapters
+- AI SDK-based intent parsing with strict schema validation
 - prompt parsing with strict schema validation
 - missing-field follow-up behavior
 - event resolver across providers/curated DB

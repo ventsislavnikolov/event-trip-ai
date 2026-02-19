@@ -1,9 +1,9 @@
 import { generateObject, type LanguageModel } from "ai";
 import {
+  type EventTripIntent,
   eventTripIntentExtractionSchema,
   getFollowUpQuestion,
   getMissingIntentFields,
-  type EventTripIntent,
   type ParsedIntentResult,
 } from "./schema";
 
@@ -71,10 +71,12 @@ function buildIntentExtractionPrompt(text: string): string {
 export async function parseIntentFromText({
   text,
   model,
+  fallbackModel,
   generateObjectFn = defaultGenerateObject,
 }: {
   text: string;
   model: LanguageModel;
+  fallbackModel?: LanguageModel;
   generateObjectFn?: GenerateObjectLike;
 }): Promise<ParsedIntentResult> {
   const normalizedText = text.trim();
@@ -90,17 +92,35 @@ export async function parseIntentFromText({
     };
   }
 
-  let parsedIntent: EventTripIntent;
-
-  try {
+  async function parseWithModel(
+    activeModel: LanguageModel
+  ): Promise<EventTripIntent> {
     const { object } = await generateObjectFn({
-      model,
+      model: activeModel,
       schema: eventTripIntentExtractionSchema,
       prompt: buildIntentExtractionPrompt(normalizedText),
     });
 
-    parsedIntent = eventTripIntentExtractionSchema.parse(object);
-  } catch (_error) {
+    return eventTripIntentExtractionSchema.parse(object);
+  }
+
+  let parsedIntent: EventTripIntent;
+
+  try {
+    parsedIntent = await parseWithModel(model);
+  } catch (_primaryError) {
+    if (fallbackModel) {
+      try {
+        parsedIntent = await parseWithModel(fallbackModel);
+      } catch (_fallbackError) {
+        parsedIntent = extractIntentWithFallback(normalizedText);
+      }
+    } else {
+      parsedIntent = extractIntentWithFallback(normalizedText);
+    }
+  }
+
+  if (!parsedIntent) {
     parsedIntent = extractIntentWithFallback(normalizedText);
   }
 
