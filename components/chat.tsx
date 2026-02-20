@@ -22,7 +22,8 @@ import { useAutoResume } from "@/hooks/use-auto-resume";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import type { Vote } from "@/lib/db/schema";
 import { ChatSDKError } from "@/lib/errors";
-import type { Attachment, ChatMessage } from "@/lib/types";
+import { injectPersistedEventTripPackagesMessage } from "@/lib/eventtrip/persistence/hydrate-messages";
+import type { Attachment, ChatMessage, CustomUIDataTypes } from "@/lib/types";
 import { fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
 import { Artifact } from "./artifact";
 import { useDataStream } from "./data-stream-provider";
@@ -174,6 +175,23 @@ export function Chat({
     messages.length >= 2 ? `/api/vote?chatId=${id}` : null,
     fetcher
   );
+  const { data: persistedEventTrip } = useSWR<{
+    packages: CustomUIDataTypes["eventtripPackages"];
+  } | null>(messages.length > 0 ? `/api/chat/${id}/eventtrip` : null, fetcher);
+
+  useEffect(() => {
+    if (!persistedEventTrip?.packages?.length) {
+      return;
+    }
+
+    setMessages((currentMessages) =>
+      injectPersistedEventTripPackagesMessage({
+        messages: currentMessages,
+        packages: persistedEventTrip.packages,
+        messageId: generateUUID(),
+      })
+    );
+  }, [persistedEventTrip, setMessages]);
 
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const isArtifactVisible = useArtifactSelector((state) => state.isVisible);

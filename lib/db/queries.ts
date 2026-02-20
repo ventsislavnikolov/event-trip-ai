@@ -19,6 +19,11 @@ import type { VisibilityType } from "@/components/visibility-selector";
 import { ChatSDKError } from "../errors";
 import type { EventTripIntent } from "../eventtrip/intent/schema";
 import {
+  type EventTripPackageOptionRow,
+  type EventTripTripRequestRow,
+  toPersistedEventTripResult,
+} from "../eventtrip/persistence/read-model";
+import {
   type EventTripPackageCard,
   toEventTripPackageOptionRows,
   toEventTripTripRequestRow,
@@ -687,6 +692,70 @@ export async function saveEventTripPipelineResult({
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to save EventTrip pipeline result"
+    );
+  }
+}
+
+export async function getLatestEventTripResultByChatId({
+  chatId,
+}: {
+  chatId: string;
+}) {
+  try {
+    const tripRequests = await client<EventTripTripRequestRow[]>`
+      select
+        id,
+        chat_id,
+        event_query,
+        origin_city,
+        travelers,
+        max_budget_per_person,
+        status,
+        created_at
+      from public.et_trip_requests
+      where chat_id = ${chatId}
+      order by created_at desc
+      limit 1
+    `;
+
+    const tripRequest = tripRequests[0];
+
+    if (!tripRequest) {
+      return null;
+    }
+
+    const packageRows = await client<EventTripPackageOptionRow[]>`
+      select
+        id,
+        trip_request_id,
+        tier,
+        total_price,
+        price_per_person,
+        within_budget,
+        ticket_price,
+        flight_price,
+        hotel_price,
+        currency,
+        outbound_links,
+        created_at
+      from public.et_package_options
+      where trip_request_id = ${tripRequest.id}
+      order by case tier
+        when 'Budget' then 1
+        when 'Best Value' then 2
+        when 'Premium' then 3
+        else 9
+      end asc
+    `;
+
+    return toPersistedEventTripResult({
+      tripRequest,
+      packageRows,
+    });
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to load latest EventTrip result by chat id"
     );
   }
 }
