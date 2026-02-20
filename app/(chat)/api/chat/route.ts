@@ -13,6 +13,7 @@ import { auth, type UserType } from "@/app/(auth)/auth";
 import { entitlementsByUserType } from "@/lib/ai/entitlements";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
+import { createApiSuccessResponse } from "@/lib/api/contracts";
 import { isProductionEnvironment } from "@/lib/constants";
 import {
   createStreamId,
@@ -382,5 +383,5 @@ export async function DELETE(request: Request) {
 
   const deletedChat = await deleteChatById({ id });
 
-  return Response.json(deletedChat, { status: 200 });
+  return createApiSuccessResponse(deletedChat, { status: 200 });
 }

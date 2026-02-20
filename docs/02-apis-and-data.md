@@ -102,3 +102,30 @@ TOTAL MVP:            ~$50-100/м
 4. Apply Booking.com Affiliate → 1-3 дни approval
 5. Създай Supabase проект → curated events table
 ```
+
+## API Response Envelope (MVP Contract)
+
+All JSON endpoints should return one of these shapes:
+
+```json
+{
+  "ok": true,
+  "data": {}
+}
+```
+
+```json
+{
+  "ok": false,
+  "error": {
+    "code": "bad_request:api",
+    "message": "The request couldn't be processed. Please check your input and try again.",
+    "cause": "Optional implementation detail"
+  }
+}
+```
+
+Notes:
+- `ok: true` always wraps payloads under `data`.
+- `ok: false` always includes `error.code` and `error.message`; `error.cause` is optional.
+- During migration, clients may still tolerate legacy `{ code, cause }` errors, but new/updated handlers should emit the envelope above.

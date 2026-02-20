@@ -7,6 +7,10 @@ import type {
 import { type ClassValue, clsx } from 'clsx';
 import { formatISO } from 'date-fns';
 import { twMerge } from 'tailwind-merge';
+import {
+  getApiErrorDetailsFromPayload,
+  unwrapApiSuccessEnvelope,
+} from '@/lib/api/contracts';
 import type { DBMessage, Document } from '@/lib/db/schema';
 import { ChatSDKError, type ErrorCode } from './errors';
 import type { ChatMessage, ChatTools, CustomUIDataTypes } from './types';
@@ -15,15 +19,15 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export const fetcher = async (url: string) => {
+export const fetcher = async <TData = unknown>(url: string): Promise<TData> => {
   const response = await fetch(url);
+  const payload = await getJsonPayload(response);
 
   if (!response.ok) {
-    const { code, cause } = await response.json();
-    throw new ChatSDKError(code as ErrorCode, cause);
+    throw createChatSdkErrorFromResponse(response.status, payload);
   }
 
-  return response.json();
+  return unwrapApiSuccessEnvelope<TData>(payload);
 };
 
 export async function fetchWithErrorHandlers(
@@ -34,17 +38,57 @@ export async function fetchWithErrorHandlers(
     const response = await fetch(input, init);
 
     if (!response.ok) {
-      const { code, cause } = await response.json();
-      throw new ChatSDKError(code as ErrorCode, cause);
+      const payload = await getJsonPayload(response);
+      throw createChatSdkErrorFromResponse(response.status, payload);
     }
 
     return response;
   } catch (error: unknown) {
-    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    if (error instanceof ChatSDKError) {
+      throw error;
+    }
+
+    if (
+      typeof navigator !== 'undefined' &&
+      'onLine' in navigator &&
+      navigator.onLine === false
+    ) {
       throw new ChatSDKError('offline:chat');
     }
 
     throw error;
+  }
+}
+
+async function getJsonPayload(response: Response): Promise<unknown> {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
+function createChatSdkErrorFromResponse(status: number, payload: unknown) {
+  const { code, cause } = getApiErrorDetailsFromPayload(payload);
+  const fallbackCode = getFallbackErrorCodeByStatus(status);
+
+  return new ChatSDKError((code || fallbackCode) as ErrorCode, cause);
+}
+
+function getFallbackErrorCodeByStatus(status: number): ErrorCode {
+  switch (status) {
+    case 400:
+      return 'bad_request:api';
+    case 401:
+      return 'unauthorized:chat';
+    case 403:
+      return 'forbidden:chat';
+    case 404:
+      return 'not_found:chat';
+    case 429:
+      return 'rate_limit:chat';
+    default:
+      return 'offline:chat';
   }
 }
 
