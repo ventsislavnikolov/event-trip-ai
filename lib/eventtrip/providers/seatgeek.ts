@@ -8,9 +8,7 @@ export type SeatGeekEvent = {
   endsAt?: string;
 };
 
-export async function fetchSeatGeekEvents(
-  _query: string
-): Promise<SeatGeekEvent[]> {
+export function fetchSeatGeekEvents(_query: string): Promise<SeatGeekEvent[]> {
   // Implementation will be connected to SeatGeek API in a dedicated issue.
-  return [];
+  return Promise.resolve([]);
 }
