@@ -24,6 +24,7 @@ Live in `main`:
 - History summary enrichment now uses batched EventTrip lookup by chat IDs to avoid per-chat query fanout.
 - Provider event lookup now retries normalized query variants (year/edition hint stripped) to improve event-resolution hit rate.
 - Candidate streaming now de-duplicates provider-overlapping events before sending disambiguation options to UI.
+- Travel provider retry now fills missing flights or hotels via selected-event-city fallback and merges partial results.
 
 Not yet wired in runtime:
 - Curated event index integration and robust event resolution across multiple provider candidates.

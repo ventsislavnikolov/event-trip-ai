@@ -208,6 +208,97 @@ test("runEventTripPipeline retries travel lookup with selected event city", asyn
   );
 });
 
+test("runEventTripPipeline retries when hotels are missing and merges retry results", async () => {
+  const travelCalls: string[] = [];
+
+  const result = await runEventTripPipeline({
+    intent: {
+      event: "Tomorrowland",
+      originCity: "SOF",
+      travelers: 1,
+    },
+    providers: {
+      ticketmaster: async () => [
+        {
+          id: "tm-1",
+          name: "Tomorrowland 2026",
+          city: "Boom",
+          country: "BE",
+          startsAt: "2026-07-20T18:00:00.000Z",
+        },
+      ],
+      seatgeek: async () => [],
+      travelpayouts: ({ destinationCity }) => {
+        travelCalls.push(destinationCity);
+
+        if (destinationCity === "Boom") {
+          return Promise.resolve({
+            flights: [],
+            hotels: [
+              {
+                id: "h-1",
+                name: "Stay 1",
+                city: "Boom",
+                pricePerNight: 150,
+                currency: "EUR",
+              },
+              {
+                id: "h-2",
+                name: "Stay 2",
+                city: "Boom",
+                pricePerNight: 200,
+                currency: "EUR",
+              },
+              {
+                id: "h-3",
+                name: "Stay 3",
+                city: "Boom",
+                pricePerNight: 260,
+                currency: "EUR",
+              },
+            ],
+          });
+        }
+
+        return Promise.resolve({
+          flights: [
+            {
+              id: "f-1",
+              origin: "SOF",
+              destination: "BRU",
+              price: 200,
+              currency: "EUR",
+            },
+            {
+              id: "f-2",
+              origin: "SOF",
+              destination: "BRU",
+              price: 250,
+              currency: "EUR",
+            },
+            {
+              id: "f-3",
+              origin: "SOF",
+              destination: "BRU",
+              price: 300,
+              currency: "EUR",
+            },
+          ],
+          hotels: [],
+        });
+      },
+    },
+  });
+
+  assert.equal(travelCalls[0], "Tomorrowland");
+  assert.equal(travelCalls[1], "Boom");
+  assert.equal(result.packages.length, 3);
+  assert.equal(
+    result.packages.every((pkg) => pkg.id.startsWith("provider-")),
+    true
+  );
+});
+
 test("runEventTripPipeline prefers explicit selectedEventCandidateId", async () => {
   const result = await runEventTripPipeline({
     intent: {

@@ -483,7 +483,7 @@ export async function runEventTripPipeline({
 
   const shouldRetryTravelWithEventCity =
     retryDestinationCity &&
-    travelOptions.flights.length === 0 &&
+    (travelOptions.flights.length === 0 || travelOptions.hotels.length === 0) &&
     retryDestinationCity.toLowerCase() !== destinationCity.trim().toLowerCase();
 
   if (shouldRetryTravelWithEventCity) {
@@ -495,12 +495,16 @@ export async function runEventTripPipeline({
         returnDate,
       });
 
-      if (
-        retriedTravelOptions.flights.length > 0 ||
-        retriedTravelOptions.hotels.length > 0
-      ) {
-        travelOptions = retriedTravelOptions;
-      }
+      travelOptions = {
+        flights:
+          travelOptions.flights.length > 0
+            ? travelOptions.flights
+            : retriedTravelOptions.flights,
+        hotels:
+          travelOptions.hotels.length > 0
+            ? travelOptions.hotels
+            : retriedTravelOptions.hotels,
+      };
     } catch (_retryError) {
       // Ignore retry failure and preserve the original provider response.
     }
