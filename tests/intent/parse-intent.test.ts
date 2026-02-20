@@ -88,3 +88,43 @@ test("uses default prompt for non-openai model ids", async () => {
   assert.match(usedPrompt, /Extract EventTrip intent fields/i);
   assert.doesNotMatch(usedPrompt, /OpenAI parseIntent adapter/i);
 });
+
+test("uses fallback model when primary model returns invalid strict-schema payload", async () => {
+  const primaryModel = { id: "primary" } as never;
+  const fallbackModel = { id: "fallback" } as never;
+  const calledModels: unknown[] = [];
+
+  const result = await parseIntentFromText({
+    text: "Tomorrowland from Sofia for 2 travelers with max budget 1200",
+    model: primaryModel,
+    fallbackModel,
+    generateObjectFn: (({ model }: { model: unknown }) => {
+      calledModels.push(model);
+
+      if (model === primaryModel) {
+        return Promise.resolve({
+          object: {
+            event: "Tomorrowland",
+            originCity: "Sofia",
+            travelers: 2,
+            maxBudgetPerPerson: 1200,
+            currency: "EUR",
+          },
+        });
+      }
+
+      return Promise.resolve({
+        object: {
+          event: "Tomorrowland",
+          originCity: "Sofia",
+          travelers: 2,
+          maxBudgetPerPerson: 1200,
+        },
+      });
+    }) as never,
+  });
+
+  assert.equal(result.followUpQuestion, null);
+  assert.deepEqual(result.missingFields, []);
+  assert.deepEqual(calledModels, [primaryModel, fallbackModel]);
+});

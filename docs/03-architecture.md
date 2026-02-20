@@ -228,6 +228,9 @@ Return JSON only:
 }`;
 ```
 
+Validation rule:
+- Parse-intent payloads are validated with a strict schema (unknown keys are rejected before intent state is used).
+
 ### Caching Strategy
 
 ```typescript

@@ -36,12 +36,14 @@ const optionalBudgetField = z.preprocess((value) => {
   return undefined;
 }, z.number().positive().optional());
 
-export const eventTripIntentExtractionSchema = z.object({
-  event: optionalStringField,
-  originCity: optionalStringField,
-  travelers: optionalTravelersField,
-  maxBudgetPerPerson: optionalBudgetField,
-});
+export const eventTripIntentExtractionSchema = z
+  .object({
+    event: optionalStringField,
+    originCity: optionalStringField,
+    travelers: optionalTravelersField,
+    maxBudgetPerPerson: optionalBudgetField,
+  })
+  .strict();
 
 export type EventTripIntent = z.infer<typeof eventTripIntentExtractionSchema>;
 
@@ -56,6 +58,10 @@ export type ParsedIntentResult = {
   missingFields: IntentField[];
   followUpQuestion: string | null;
 };
+
+export function validateEventTripIntent(input: unknown) {
+  return eventTripIntentExtractionSchema.safeParse(input);
+}
 
 const REQUIRED_FIELDS: IntentField[] = [
   "event",

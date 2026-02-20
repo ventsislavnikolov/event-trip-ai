@@ -10,6 +10,7 @@ import {
   getFollowUpQuestion,
   getMissingIntentFields,
   type ParsedIntentResult,
+  validateEventTripIntent,
 } from "./schema";
 
 async function defaultGenerateObject(options: {
@@ -113,7 +114,13 @@ export async function parseIntentFromText({
       prompt: buildIntentExtractionPrompt(normalizedText),
     });
 
-    return eventTripIntentExtractionSchema.parse(object);
+    const validatedIntent = validateEventTripIntent(object);
+
+    if (!validatedIntent.success) {
+      throw new Error("Invalid intent schema payload");
+    }
+
+    return validatedIntent.data;
   }
 
   let parsedIntent: EventTripIntent;
