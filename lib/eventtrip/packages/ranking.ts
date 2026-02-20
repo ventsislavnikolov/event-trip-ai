@@ -82,7 +82,8 @@ function selectPremiumOption(
   }
 
   const medianPrice = median(options.map((option) => option.totalPrice));
-  const outlierUpperBound = medianPrice > 0 ? medianPrice * 2 : Number.POSITIVE_INFINITY;
+  const outlierUpperBound =
+    medianPrice > 0 ? medianPrice * 2 : Number.POSITIVE_INFINITY;
 
   const nonOutliers = available.filter(
     (option) => option.totalPrice <= outlierUpperBound
@@ -131,11 +132,14 @@ function toRankedOption({
   selectionReason: string;
 }): RankedPackageOption {
   const withinBudget =
-    maxBudgetPerPerson === undefined ? true : option.totalPrice <= maxBudgetPerPerson;
+    maxBudgetPerPerson === undefined
+      ? true
+      : option.totalPrice <= maxBudgetPerPerson;
   const overBudgetAmount = withinBudget
     ? 0
-    : Math.round((option.totalPrice - (maxBudgetPerPerson ?? option.totalPrice)) * 100) /
-      100;
+    : Math.round(
+        (option.totalPrice - (maxBudgetPerPerson ?? option.totalPrice)) * 100
+      ) / 100;
 
   return {
     ...option,

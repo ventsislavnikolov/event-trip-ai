@@ -8,9 +8,9 @@ export type TicketmasterEvent = {
   endsAt?: string;
 };
 
-export async function fetchTicketmasterEvents(
+export function fetchTicketmasterEvents(
   _query: string
 ): Promise<TicketmasterEvent[]> {
   // Implementation will be connected to Ticketmaster API in a dedicated issue.
-  return [];
+  return Promise.resolve([]);
 }
