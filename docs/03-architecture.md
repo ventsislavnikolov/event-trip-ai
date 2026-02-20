@@ -23,6 +23,7 @@ Live in `main`:
 - Sidebar chat history now includes persisted EventTrip summary metadata per chat (`eventTripSummary`) from `et_trip_requests`/`et_events`.
 - History summary enrichment now uses batched EventTrip lookup by chat IDs to avoid per-chat query fanout.
 - Provider event lookup now retries normalized query variants (year/edition hint stripped) to improve event-resolution hit rate.
+- Candidate streaming now de-duplicates provider-overlapping events before sending disambiguation options to UI.
 
 Not yet wired in runtime:
 - Curated event index integration and robust event resolution across multiple provider candidates.

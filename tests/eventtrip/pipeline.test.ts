@@ -470,3 +470,86 @@ test("runEventTripPipeline retries provider event lookup with normalized query v
   assert.equal(result.selectedEvent?.provider, "ticketmaster");
   assert.equal(result.selectedEvent?.providerEventId, "tm-1");
 });
+
+test("runEventTripPipeline de-duplicates candidate list across providers", async () => {
+  const result = await runEventTripPipeline({
+    intent: {
+      event: "Tomorrowland",
+      originCity: "SOF",
+      travelers: 1,
+      maxBudgetPerPerson: 1200,
+    },
+    providers: {
+      ticketmaster: async () => [
+        {
+          id: "tm-1",
+          name: "Tomorrowland 2026",
+          city: "Boom",
+          country: "BE",
+          startsAt: "2026-07-20T18:00:00.000Z",
+        },
+      ],
+      seatgeek: async () => [
+        {
+          id: "sg-1",
+          title: "Tomorrowland 2026",
+          city: "Boom",
+          country: "BE",
+          startsAt: "2026-07-20T18:00:00.000Z",
+        },
+      ],
+      travelpayouts: async () => ({
+        flights: [
+          {
+            id: "f-1",
+            origin: "SOF",
+            destination: "BRU",
+            price: 140,
+            currency: "EUR",
+          },
+          {
+            id: "f-2",
+            origin: "SOF",
+            destination: "BRU",
+            price: 220,
+            currency: "EUR",
+          },
+          {
+            id: "f-3",
+            origin: "SOF",
+            destination: "BRU",
+            price: 330,
+            currency: "EUR",
+          },
+        ],
+        hotels: [
+          {
+            id: "h-1",
+            name: "Stay 1",
+            city: "Boom",
+            pricePerNight: 160,
+            currency: "EUR",
+          },
+          {
+            id: "h-2",
+            name: "Stay 2",
+            city: "Boom",
+            pricePerNight: 230,
+            currency: "EUR",
+          },
+          {
+            id: "h-3",
+            name: "Stay 3",
+            city: "Boom",
+            pricePerNight: 340,
+            currency: "EUR",
+          },
+        ],
+      }),
+    },
+  });
+
+  assert.equal(result.candidates.length, 1);
+  assert.equal(result.candidates[0]?.name, "Tomorrowland 2026");
+  assert.equal(result.candidates[0]?.location, "Boom, BE");
+});

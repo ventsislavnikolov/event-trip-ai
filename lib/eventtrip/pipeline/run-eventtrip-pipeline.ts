@@ -317,21 +317,44 @@ function buildEventCandidates({
   ticketmasterEvents: TicketmasterEvent[];
   seatGeekEvents: SeatGeekEvent[];
 }): EventTripPipelineResult["candidates"] {
-  const fromTicketmaster = ticketmasterEvents.map((event) => ({
-    id: `ticketmaster:${event.id}`,
-    name: event.name,
-    location: toLocation(event.city, event.country),
-    startsAt: event.startsAt,
-  }));
+  const candidates = [
+    ...ticketmasterEvents.map((event) => ({
+      id: `ticketmaster:${event.id}`,
+      name: event.name,
+      location: toLocation(event.city, event.country),
+      startsAt: event.startsAt,
+    })),
+    ...seatGeekEvents.map((event) => ({
+      id: `seatgeek:${event.id}`,
+      name: event.title,
+      location: toLocation(event.city, event.country),
+      startsAt: event.startsAt,
+    })),
+  ];
 
-  const fromSeatGeek = seatGeekEvents.map((event) => ({
-    id: `seatgeek:${event.id}`,
-    name: event.title,
-    location: toLocation(event.city, event.country),
-    startsAt: event.startsAt,
-  }));
+  const dedupedCandidates: EventTripPipelineResult["candidates"] = [];
+  const seenCandidateKeys = new Set<string>();
 
-  return [...fromTicketmaster, ...fromSeatGeek].slice(0, 5);
+  for (const candidate of candidates) {
+    const candidateKey = [
+      normalizeEventText(candidate.name),
+      normalizeEventText(candidate.location ?? ""),
+      candidate.startsAt ?? "",
+    ].join("|");
+
+    if (seenCandidateKeys.has(candidateKey)) {
+      continue;
+    }
+
+    seenCandidateKeys.add(candidateKey);
+    dedupedCandidates.push(candidate);
+
+    if (dedupedCandidates.length >= 5) {
+      break;
+    }
+  }
+
+  return dedupedCandidates;
 }
 
 function buildProviderPackageOptions({
