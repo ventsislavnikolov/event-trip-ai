@@ -21,6 +21,7 @@ import {
   type EventCandidate,
 } from "./eventtrip/disambiguation-picker";
 import { PackageCards } from "./eventtrip/package-cards";
+import { SelectedEventSummary } from "./eventtrip/selected-event-summary";
 import { SparklesIcon } from "./icons";
 import { MessageActions } from "./message-actions";
 import { MessageEditor } from "./message-editor";
@@ -363,6 +364,27 @@ const PurePreviewMessage = ({
               }
 
               return <PackageCards key={key} packages={packagePart.data} />;
+            }
+
+            if (type === "data-eventtripSelectedEvent") {
+              const selectedEventPart = part as {
+                type: "data-eventtripSelectedEvent";
+                data: Parameters<typeof SelectedEventSummary>[0]["event"];
+              };
+
+              if (
+                !selectedEventPart.data ||
+                typeof selectedEventPart.data !== "object"
+              ) {
+                return null;
+              }
+
+              return (
+                <SelectedEventSummary
+                  event={selectedEventPart.data}
+                  key={key}
+                />
+              );
             }
 
             if (type === "data-eventtripCandidates") {

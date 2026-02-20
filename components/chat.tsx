@@ -180,11 +180,16 @@ export function Chat({
     originCity: string;
     travelers: number;
     maxBudgetPerPerson: number | null;
+    selectedEvent: CustomUIDataTypes["eventtripSelectedEvent"] | null;
     packages: CustomUIDataTypes["eventtripPackages"];
   } | null>(messages.length > 0 ? `/api/chat/${id}/eventtrip` : null, fetcher);
 
   useEffect(() => {
-    if (!persistedEventTrip?.packages?.length) {
+    if (
+      !persistedEventTrip ||
+      (!persistedEventTrip.packages?.length &&
+        !persistedEventTrip.selectedEvent)
+    ) {
       return;
     }
 
@@ -192,6 +197,7 @@ export function Chat({
       injectPersistedEventTripPackagesMessage({
         messages: currentMessages,
         packages: persistedEventTrip.packages,
+        selectedEvent: persistedEventTrip.selectedEvent,
         messageId: generateUUID(),
       })
     );

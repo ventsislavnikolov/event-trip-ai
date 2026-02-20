@@ -1,23 +1,51 @@
-import type { ChatMessage, CustomUIDataTypes } from "@/lib/types";
+import type {
+  ChatMessage,
+  CustomUIDataTypes,
+  EventTripSelectedEventData,
+} from "@/lib/types";
 
 export function injectPersistedEventTripPackagesMessage({
   messages,
   packages,
+  selectedEvent,
   messageId,
 }: {
   messages: ChatMessage[];
   packages: CustomUIDataTypes["eventtripPackages"];
+  selectedEvent?: EventTripSelectedEventData | null;
   messageId: string;
 }): ChatMessage[] {
-  if (!Array.isArray(packages) || packages.length === 0) {
+  const hasPackages = Array.isArray(packages) && packages.length > 0;
+  const hasSelectedEvent = Boolean(selectedEvent);
+
+  if (!hasPackages && !hasSelectedEvent) {
     return messages;
   }
 
   const alreadyHasPackages = messages.some((message) =>
     message.parts.some((part) => part.type === "data-eventtripPackages")
   );
+  const alreadyHasSelectedEvent = messages.some((message) =>
+    message.parts.some((part) => part.type === "data-eventtripSelectedEvent")
+  );
 
-  if (alreadyHasPackages) {
+  const nextParts: ChatMessage["parts"] = [];
+
+  if (selectedEvent && !alreadyHasSelectedEvent) {
+    nextParts.push({
+      type: "data-eventtripSelectedEvent",
+      data: selectedEvent,
+    });
+  }
+
+  if (hasPackages && !alreadyHasPackages) {
+    nextParts.push({
+      type: "data-eventtripPackages",
+      data: packages,
+    });
+  }
+
+  if (nextParts.length === 0) {
     return messages;
   }
 
@@ -29,12 +57,7 @@ export function injectPersistedEventTripPackagesMessage({
       metadata: {
         createdAt: new Date().toISOString(),
       },
-      parts: [
-        {
-          type: "data-eventtripPackages",
-          data: packages,
-        },
-      ],
+      parts: nextParts,
     } satisfies ChatMessage,
   ];
 }

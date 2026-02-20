@@ -14,6 +14,14 @@ test("injectPersistedEventTripPackagesMessage appends assistant package message"
   const next = injectPersistedEventTripPackagesMessage({
     messages: messages as never,
     messageId: "m-2",
+    selectedEvent: {
+      provider: "ticketmaster",
+      providerEventId: "tm-1",
+      name: "Tomorrowland 2026",
+      city: "Boom",
+      country: "BE",
+      startsAt: "2026-07-20T18:00:00.000Z",
+    },
     packages: [
       {
         id: "pkg-1",
@@ -33,7 +41,8 @@ test("injectPersistedEventTripPackagesMessage appends assistant package message"
   assert.equal(next.length, 2);
   assert.equal(next[1]?.id, "m-2");
   assert.equal(next[1]?.role, "assistant");
-  assert.equal(next[1]?.parts[0]?.type, "data-eventtripPackages");
+  assert.equal(next[1]?.parts[0]?.type, "data-eventtripSelectedEvent");
+  assert.equal(next[1]?.parts[1]?.type, "data-eventtripPackages");
 });
 
 test("injectPersistedEventTripPackagesMessage does not append duplicate package part", () => {
@@ -84,4 +93,49 @@ test("injectPersistedEventTripPackagesMessage does not append duplicate package 
 
   assert.equal(next.length, 1);
   assert.equal(next[0]?.id, "m-1");
+});
+
+test("injectPersistedEventTripPackagesMessage appends selected event when packages already exist", () => {
+  const messages = [
+    {
+      id: "m-1",
+      role: "assistant",
+      parts: [
+        {
+          type: "data-eventtripPackages",
+          data: [
+            {
+              id: "pkg-1",
+              tier: "Budget",
+              currency: "EUR",
+              ticketPrice: 100,
+              flightPrice: 200,
+              hotelPrice: 300,
+              totalPrice: 600,
+              withinBudget: true,
+              overBudgetAmount: 0,
+              bookingLinks: {},
+            },
+          ],
+        },
+      ],
+    },
+  ];
+
+  const next = injectPersistedEventTripPackagesMessage({
+    messages: messages as never,
+    messageId: "m-2",
+    selectedEvent: {
+      provider: "ticketmaster",
+      providerEventId: "tm-1",
+      name: "Tomorrowland 2026",
+      city: "Boom",
+      country: "BE",
+      startsAt: "2026-07-20T18:00:00.000Z",
+    },
+    packages: [],
+  });
+
+  assert.equal(next.length, 2);
+  assert.equal(next[1]?.parts[0]?.type, "data-eventtripSelectedEvent");
 });

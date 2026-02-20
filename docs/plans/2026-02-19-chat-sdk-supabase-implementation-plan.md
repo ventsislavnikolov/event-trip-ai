@@ -24,7 +24,7 @@ Completed on `main`:
 
 Outstanding follow-ups:
 - Expand provider data normalization beyond the current bootstrap city-to-airport mapping and improve event resolution hit rate.
-- Expand client/product usage of persisted EventTrip rows (`et_trip_requests`, `et_package_options`) and linked `et_events` metadata.
+- Expand client/product usage of persisted EventTrip rows (`et_trip_requests`, `et_package_options`) and linked `et_events` metadata beyond current chat hydration/rendering.
 - Keep docs/checklists in sync with implementation deltas.
 
 ---

@@ -17,11 +17,12 @@ Live in `main`:
 - Disambiguation picker selection now feeds a concrete follow-up user prompt back into chat flow.
 - Intent parsing supports `selectedEventCandidateId`, allowing explicit candidate selection to drive deterministic event choice.
 - Travelpayouts flight lookups now include bootstrap city-to-airport normalization for common city-name inputs.
+- Linked `et_events` metadata now hydrates and renders a selected-event summary in chat surfaces.
 
 Not yet wired in runtime:
 - Curated event index integration and robust event resolution across multiple provider candidates.
 - Broader and data-backed city-to-airport normalization coverage for Travelpayouts flight lookups.
-- Broader client/product usage of linked `et_events` metadata in product surfaces.
+- Broader client/product usage of linked `et_events` metadata outside chat surfaces.
 
 This document keeps the target architecture for upcoming slices; use this snapshot as the current-state source of truth.
 

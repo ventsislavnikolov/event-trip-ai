@@ -9,6 +9,17 @@ import type { Suggestion } from "./db/schema";
 
 export type DataPart = { type: "append-message"; message: string };
 
+export type EventTripSelectedEventData = {
+  provider: "ticketmaster" | "seatgeek";
+  providerEventId: string;
+  name: string;
+  city?: string;
+  country?: string;
+  venue?: string;
+  startsAt?: string;
+  endsAt?: string;
+};
+
 export const messageMetadataSchema = z.object({
   createdAt: z.string(),
 });
@@ -64,6 +75,7 @@ export type CustomUIDataTypes = {
     location?: string;
     startsAt?: string;
   }[];
+  eventtripSelectedEvent: EventTripSelectedEventData;
 };
 
 export type ChatMessage = UIMessage<

@@ -206,6 +206,13 @@ export async function POST(request: Request) {
 
         const eventTripResultStream = createUIMessageStream<ChatMessage>({
           execute: ({ writer }) => {
+            if (pipelineResult.selectedEvent) {
+              writer.write({
+                type: "data-eventtripSelectedEvent",
+                data: pipelineResult.selectedEvent,
+              });
+            }
+
             writer.write({
               type: "data-eventtripPackages",
               data: pipelineResult.packages,
