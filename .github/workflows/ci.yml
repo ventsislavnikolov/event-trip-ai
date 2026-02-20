@@ -42,6 +42,7 @@ jobs:
             tests/intent/parse-intent.test.ts \
             tests/intent/chat-intent-gate.test.ts \
             tests/packages/ranking.test.ts \
+            tests/providers/provider-adapters.test.ts \
             tests/providers/collector.test.ts \
             tests/ui/package-cards.test.tsx \
             tests/ui/disambiguation-picker.test.tsx

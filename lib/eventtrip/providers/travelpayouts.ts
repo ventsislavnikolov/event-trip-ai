@@ -20,6 +20,48 @@ const TRAVELPAYOUTS_FLIGHTS_BASE_URL =
 const TRAVELPAYOUTS_HOTELS_BASE_URL =
   "https://engine.hotellook.com/api/v2/cache.json";
 
+// Deterministic bootstrap map for common city-name inputs when IATA is missing.
+const CITY_TO_AIRPORT_CODE: Record<string, string> = {
+  amsterdam: "AMS",
+  antwerp: "BRU",
+  athens: "ATH",
+  barcelona: "BCN",
+  belgrade: "BEG",
+  berlin: "BER",
+  boom: "BRU",
+  brussels: "BRU",
+  bucharest: "OTP",
+  budapest: "BUD",
+  chicago: "ORD",
+  copenhagen: "CPH",
+  dublin: "DUB",
+  geneva: "GVA",
+  istanbul: "IST",
+  lisbon: "LIS",
+  london: "LHR",
+  "los angeles": "LAX",
+  madrid: "MAD",
+  melbourne: "MEL",
+  miami: "MIA",
+  milan: "MXP",
+  munich: "MUC",
+  "new york": "JFK",
+  oslo: "OSL",
+  paris: "CDG",
+  porto: "OPO",
+  prague: "PRG",
+  "san francisco": "SFO",
+  seoul: "ICN",
+  singapore: "SIN",
+  sofia: "SOF",
+  stockholm: "ARN",
+  sydney: "SYD",
+  tokyo: "HND",
+  vienna: "VIE",
+  warsaw: "WAW",
+  zurich: "ZRH",
+};
+
 function asRecord(value: unknown): Record<string, unknown> | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return null;
@@ -63,6 +105,14 @@ function asNumber(value: unknown): number | undefined {
   return undefined;
 }
 
+function normalizeCityLookup(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function extractAirportCode(value: string): string | undefined {
   const normalized = value.trim().toUpperCase();
   if (/^[A-Z]{3}$/.test(normalized)) {
@@ -70,7 +120,34 @@ function extractAirportCode(value: string): string | undefined {
   }
 
   const match = normalized.match(/\b([A-Z]{3})\b/);
-  return match?.[1];
+  if (match?.[1]) {
+    return match[1];
+  }
+
+  const normalizedCity = normalizeCityLookup(value);
+  if (!normalizedCity) {
+    return undefined;
+  }
+
+  const directLookup = CITY_TO_AIRPORT_CODE[normalizedCity];
+  if (directLookup) {
+    return directLookup;
+  }
+
+  const segmentedLookup = value
+    .split(/[|/,]/)
+    .map((segment) => normalizeCityLookup(segment))
+    .find((segment) => CITY_TO_AIRPORT_CODE[segment]);
+  if (segmentedLookup) {
+    return CITY_TO_AIRPORT_CODE[segmentedLookup];
+  }
+
+  const withoutSuffix = normalizedCity
+    .replace(/\b(international|airport|city)\b/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return CITY_TO_AIRPORT_CODE[withoutSuffix];
 }
 
 export async function fetchTravelPayoutsFlights(params: {

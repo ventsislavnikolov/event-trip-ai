@@ -16,10 +16,11 @@ Live in `main`:
 - Travel provider retry fallback that re-queries with selected event city when the raw event query returns no flight options.
 - Disambiguation picker selection now feeds a concrete follow-up user prompt back into chat flow.
 - Intent parsing supports `selectedEventCandidateId`, allowing explicit candidate selection to drive deterministic event choice.
+- Travelpayouts flight lookups now include bootstrap city-to-airport normalization for common city-name inputs.
 
 Not yet wired in runtime:
 - Curated event index integration and robust event resolution across multiple provider candidates.
-- Reliable city-to-airport normalization for Travelpayouts flight lookups.
+- Broader and data-backed city-to-airport normalization coverage for Travelpayouts flight lookups.
 - Broader client/product usage of linked `et_events` metadata in product surfaces.
 
 This document keeps the target architecture for upcoming slices; use this snapshot as the current-state source of truth.

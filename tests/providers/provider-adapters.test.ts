@@ -217,6 +217,63 @@ test("maps Travelpayouts flight and hotel payloads", async () => {
   resetEnv();
 });
 
+test("maps city names to airport codes for Travelpayouts flights", async () => {
+  process.env.TRAVELPAYOUTS_API_TOKEN = "tp-token";
+  let requestUrl = "";
+
+  mockFetch((input) => {
+    requestUrl = input;
+    return new Response(
+      JSON.stringify({
+        success: true,
+        data: {
+          "2026-09-10": {
+            origin: "SOF",
+            destination: "BRU",
+            price: 190,
+          },
+        },
+      }),
+      { status: 200 }
+    );
+  });
+
+  const flights = await fetchTravelPayoutsFlights({
+    originCity: "Sofia, Bulgaria",
+    destinationCity: "Boom, Belgium",
+    departDate: "2026-09-10",
+    returnDate: "2026-09-15",
+  });
+
+  assert.equal(flights.length, 1);
+  assert.match(requestUrl, /origin=SOF/i);
+  assert.match(requestUrl, /destination=BRU/i);
+
+  resetEnv();
+});
+
+test("returns empty flights when airport codes cannot be resolved", async () => {
+  process.env.TRAVELPAYOUTS_API_TOKEN = "tp-token";
+  let called = false;
+
+  mockFetch(() => {
+    called = true;
+    return new Response("{}", { status: 200 });
+  });
+
+  const flights = await fetchTravelPayoutsFlights({
+    originCity: "Atlantis",
+    destinationCity: "El Dorado",
+    departDate: "2026-09-10",
+    returnDate: "2026-09-15",
+  });
+
+  assert.deepEqual(flights, []);
+  assert.equal(called, false);
+
+  resetEnv();
+});
+
 test.after(() => {
   if (originalFetch) {
     globalThis.fetch = originalFetch;
