@@ -61,19 +61,27 @@ export function PackageCards({ packages }: PackageCardsProps) {
           <dl className="space-y-2 text-sm">
             <div className="flex items-center justify-between">
               <dt>Ticket</dt>
-              <dd>{formatPrice(tripPackage.ticketPrice, tripPackage.currency)}</dd>
+              <dd>
+                {formatPrice(tripPackage.ticketPrice, tripPackage.currency)}
+              </dd>
             </div>
             <div className="flex items-center justify-between">
               <dt>Flight</dt>
-              <dd>{formatPrice(tripPackage.flightPrice, tripPackage.currency)}</dd>
+              <dd>
+                {formatPrice(tripPackage.flightPrice, tripPackage.currency)}
+              </dd>
             </div>
             <div className="flex items-center justify-between">
               <dt>Hotel</dt>
-              <dd>{formatPrice(tripPackage.hotelPrice, tripPackage.currency)}</dd>
+              <dd>
+                {formatPrice(tripPackage.hotelPrice, tripPackage.currency)}
+              </dd>
             </div>
             <div className="mt-3 flex items-center justify-between border-t pt-3 text-sm font-semibold">
               <dt>Total</dt>
-              <dd>{formatPrice(tripPackage.totalPrice, tripPackage.currency)}</dd>
+              <dd>
+                {formatPrice(tripPackage.totalPrice, tripPackage.currency)}
+              </dd>
             </div>
           </dl>
 

@@ -159,13 +159,21 @@ export async function collectProviderData<
     ticketmaster: null,
     seatgeek: null,
     travelpayouts: null,
-  } as CollectProviderDataResult<TTicketmaster, TSeatGeek, TTravelPayouts>["results"];
+  } as CollectProviderDataResult<
+    TTicketmaster,
+    TSeatGeek,
+    TTravelPayouts
+  >["results"];
 
   const failures = {
     ticketmaster: null,
     seatgeek: null,
     travelpayouts: null,
-  } as CollectProviderDataResult<TTicketmaster, TSeatGeek, TTravelPayouts>["failures"];
+  } as CollectProviderDataResult<
+    TTicketmaster,
+    TSeatGeek,
+    TTravelPayouts
+  >["failures"];
 
   for (const entry of settledEntries) {
     results[entry.providerName] = entry.value as never;

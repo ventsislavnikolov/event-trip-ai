@@ -1,4 +1,4 @@
-type IntentModelRoutingEnv = NodeJS.ProcessEnv & {
+type IntentModelRoutingEnv = Partial<NodeJS.ProcessEnv> & {
   EVENTTRIP_INTENT_PRIMARY_MODEL?: string;
   EVENTTRIP_INTENT_FALLBACK_MODEL?: string;
 };
