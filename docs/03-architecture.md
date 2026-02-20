@@ -18,6 +18,7 @@ Live in `main`:
 - Intent parsing supports `selectedEventCandidateId`, allowing explicit candidate selection to drive deterministic event choice.
 - Travelpayouts flight lookups now include bootstrap city-to-airport normalization for common city-name inputs.
 - Linked `et_events` metadata now hydrates and renders a selected-event summary in chat surfaces.
+- Airport-code normalization is now centralized in a dedicated resolver module with alias and suffix-aware matching.
 
 Not yet wired in runtime:
 - Curated event index integration and robust event resolution across multiple provider candidates.
