@@ -24,6 +24,13 @@
 - Auth.js for MVP anonymous/auth flows
 - Supabase Postgres for primary database (`POSTGRES_URL`)
 
+## Secrets Policy
+
+Canonical key names and environment policy are documented in:
+
+- [`docs/runbooks/vercel-secrets-policy.md`](docs/runbooks/vercel-secrets-policy.md)
+- [`.env.example`](.env.example)
+
 ## Model Providers
 
 This template uses the [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) to access multiple AI models through a unified interface. The default configuration includes [xAI](https://x.ai) models (`grok-2-vision-1212`, `grok-3-mini`) routed through the gateway.
@@ -59,9 +66,16 @@ pnpm install
 - `REDIS_URL` (optional for stream resume)
 - `EVENTTRIP_INTENT_PRIMARY_MODEL` (optional override for parse-intent model)
 - `EVENTTRIP_INTENT_FALLBACK_MODEL` (optional parse-intent fallback model)
+- provider keys (optional until provider integrations are enabled):
+  - `TICKETMASTER_API_KEY`
+  - `SEATGEEK_CLIENT_ID`
+  - `SEATGEEK_CLIENT_SECRET`
+  - `TRAVELPAYOUTS_API_TOKEN`
+  - `TRAVELPAYOUTS_MARKER`
 3. Run migrations and dev server:
 
 ```bash
+pnpm env:check:local
 pnpm db:migrate # Setup database or apply latest database changes
 pnpm dev
 ```

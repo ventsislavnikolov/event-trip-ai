@@ -9,6 +9,7 @@ This runbook defines the minimum checks required before preview promotion and be
 - `.env.local` contains required values (`AUTH_SECRET`, `POSTGRES_URL`, and model/provider keys).
 - Database migrations are up to date.
 - Branch is rebased on latest mainline.
+- Required environment keys are validated with `pnpm env:check:local` (see `docs/runbooks/vercel-secrets-policy.md`).
 
 ## Local Smoke Checks
 
@@ -18,6 +19,7 @@ pnpm install
 ```
 2. Run schema/migration path:
 ```bash
+pnpm env:check:local
 pnpm db:migrate
 ```
 3. Run fast local test gates:
@@ -57,6 +59,7 @@ Release is blocked unless all of the following are true:
 - Smoke/unit tests pass.
 - `pnpm build` passes.
 - `tests/e2e/core-flow.spec.ts` passes.
+- Preview/production environment keys pass `pnpm env:check:preview` and `pnpm env:check:production`.
 
 ## Rollback Notes
 
