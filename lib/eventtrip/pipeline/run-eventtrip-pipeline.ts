@@ -59,6 +59,47 @@ type EventTripPipelineProviders = {
   }) => Promise<TravelPayoutsBundle>;
 };
 
+function normalizeEventQuery(value: string): string {
+  return value.replace(/\s+/g, " ").trim();
+}
+
+function buildEventQueryFallbacks(query: string): string[] {
+  const normalized = normalizeEventQuery(query);
+  if (!normalized) {
+    return [];
+  }
+
+  const withoutYear = normalizeEventQuery(
+    normalized.replace(/\b(19|20)\d{2}\b/g, "")
+  );
+  const withoutEditionHints = normalizeEventQuery(
+    withoutYear.replace(/\b(edition|tour|live)\b/gi, "")
+  );
+
+  return Array.from(
+    new Set([normalized, withoutYear, withoutEditionHints].filter(Boolean))
+  );
+}
+
+async function searchEventsWithFallbacks<TEvent>({
+  provider,
+  query,
+}: {
+  provider: (query: string) => Promise<TEvent[]>;
+  query: string;
+}): Promise<TEvent[]> {
+  const queryVariants = buildEventQueryFallbacks(query);
+
+  for (const queryVariant of queryVariants) {
+    const results = await provider(queryVariant);
+    if (results.length > 0) {
+      return results;
+    }
+  }
+
+  return [];
+}
+
 function formatProviderFailureSummary(
   failures: Record<string, { kind: string; message: string } | null>
 ): string[] {
@@ -384,8 +425,16 @@ export async function runEventTripPipeline({
     timeoutMs: 2000,
     retries: 1,
     providers: {
-      ticketmaster: async () => activeProviders.ticketmaster(destinationCity),
-      seatgeek: async () => activeProviders.seatgeek(destinationCity),
+      ticketmaster: async () =>
+        searchEventsWithFallbacks({
+          provider: activeProviders.ticketmaster,
+          query: destinationCity,
+        }),
+      seatgeek: async () =>
+        searchEventsWithFallbacks({
+          provider: activeProviders.seatgeek,
+          query: destinationCity,
+        }),
       travelpayouts: async () =>
         activeProviders.travelpayouts({
           originCity,

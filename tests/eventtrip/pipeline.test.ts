@@ -373,3 +373,100 @@ test("runEventTripPipeline picks best event name match across providers", async 
   assert.equal(result.selectedEvent?.provider, "seatgeek");
   assert.equal(result.selectedEvent?.providerEventId, "sg-1");
 });
+
+test("runEventTripPipeline retries provider event lookup with normalized query variants", async () => {
+  const ticketmasterQueries: string[] = [];
+  const seatGeekQueries: string[] = [];
+
+  const result = await runEventTripPipeline({
+    intent: {
+      event: "Tomorrowland 2026 Live",
+      originCity: "SOF",
+      travelers: 1,
+      maxBudgetPerPerson: 1200,
+    },
+    providers: {
+      ticketmaster: (query) => {
+        ticketmasterQueries.push(query);
+        if (query === "Tomorrowland") {
+          return Promise.resolve([
+            {
+              id: "tm-1",
+              name: "Tomorrowland 2026",
+              city: "Boom",
+              country: "BE",
+              startsAt: "2026-07-20T18:00:00.000Z",
+            },
+          ]);
+        }
+
+        return Promise.resolve([]);
+      },
+      seatgeek: (query) => {
+        seatGeekQueries.push(query);
+        return Promise.resolve([]);
+      },
+      travelpayouts: async () => ({
+        flights: [
+          {
+            id: "f-1",
+            origin: "SOF",
+            destination: "BRU",
+            price: 140,
+            currency: "EUR",
+          },
+          {
+            id: "f-2",
+            origin: "SOF",
+            destination: "BRU",
+            price: 220,
+            currency: "EUR",
+          },
+          {
+            id: "f-3",
+            origin: "SOF",
+            destination: "BRU",
+            price: 330,
+            currency: "EUR",
+          },
+        ],
+        hotels: [
+          {
+            id: "h-1",
+            name: "Stay 1",
+            city: "Boom",
+            pricePerNight: 160,
+            currency: "EUR",
+          },
+          {
+            id: "h-2",
+            name: "Stay 2",
+            city: "Boom",
+            pricePerNight: 230,
+            currency: "EUR",
+          },
+          {
+            id: "h-3",
+            name: "Stay 3",
+            city: "Boom",
+            pricePerNight: 340,
+            currency: "EUR",
+          },
+        ],
+      }),
+    },
+  });
+
+  assert.deepEqual(ticketmasterQueries, [
+    "Tomorrowland 2026 Live",
+    "Tomorrowland Live",
+    "Tomorrowland",
+  ]);
+  assert.deepEqual(seatGeekQueries, [
+    "Tomorrowland 2026 Live",
+    "Tomorrowland Live",
+    "Tomorrowland",
+  ]);
+  assert.equal(result.selectedEvent?.provider, "ticketmaster");
+  assert.equal(result.selectedEvent?.providerEventId, "tm-1");
+});
