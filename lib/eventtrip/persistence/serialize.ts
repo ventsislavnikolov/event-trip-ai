@@ -18,6 +18,17 @@ type EventTripPackageCard = {
   };
 };
 
+type EventTripSelectedEvent = {
+  provider: "ticketmaster" | "seatgeek";
+  providerEventId: string;
+  name: string;
+  city?: string;
+  country?: string;
+  venue?: string;
+  startsAt?: string;
+  endsAt?: string;
+};
+
 type TripRequestRow = {
   chatId: string;
   eventQuery: string;
@@ -38,6 +49,17 @@ type PackageOptionRow = {
   hotelPrice: number;
   currency: string;
   outboundLinks: EventTripPackageCard["bookingLinks"];
+};
+
+type EventRow = {
+  provider: EventTripSelectedEvent["provider"];
+  providerEventId: string;
+  name: string;
+  city: string | null;
+  country: string | null;
+  venue: string | null;
+  startsAt: string;
+  endsAt: string | null;
 };
 
 function roundMoney(value: number): number {
@@ -86,4 +108,37 @@ export function toEventTripPackageOptionRows({
   }));
 }
 
-export type { EventTripPackageCard, PackageOptionRow, TripRequestRow };
+export function toEventTripEventRow(
+  selectedEvent: EventTripSelectedEvent | null | undefined
+): EventRow | null {
+  if (!selectedEvent?.startsAt) {
+    return null;
+  }
+
+  const providerEventId = selectedEvent.providerEventId.trim();
+  const name = selectedEvent.name.trim();
+  const startsAt = selectedEvent.startsAt.trim();
+
+  if (!providerEventId || !name || !startsAt) {
+    return null;
+  }
+
+  return {
+    provider: selectedEvent.provider,
+    providerEventId,
+    name,
+    city: selectedEvent.city?.trim() || null,
+    country: selectedEvent.country?.trim() || null,
+    venue: selectedEvent.venue?.trim() || null,
+    startsAt,
+    endsAt: selectedEvent.endsAt?.trim() || null,
+  };
+}
+
+export type {
+  EventRow as EventTripEventRow,
+  EventTripPackageCard,
+  EventTripSelectedEvent,
+  PackageOptionRow,
+  TripRequestRow,
+};

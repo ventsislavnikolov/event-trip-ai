@@ -9,6 +9,14 @@ type TripRequestRow = {
   max_budget_per_person: string | number | null;
   status: string;
   created_at: string | Date;
+  event_provider?: string | null;
+  event_provider_event_id?: string | null;
+  event_name?: string | null;
+  event_city?: string | null;
+  event_country?: string | null;
+  event_venue?: string | null;
+  event_starts_at?: string | Date | null;
+  event_ends_at?: string | Date | null;
 };
 
 type PackageOptionRow = {
@@ -41,6 +49,16 @@ type PersistedEventTripResult = {
   maxBudgetPerPerson: number | null;
   status: string;
   createdAt: string;
+  event: {
+    provider: "ticketmaster" | "seatgeek";
+    providerEventId: string;
+    name: string;
+    city?: string;
+    country?: string;
+    venue?: string;
+    startsAt: string;
+    endsAt?: string;
+  } | null;
   packages: {
     id: string;
     tier: PackageTier;
@@ -89,6 +107,16 @@ function normalizeDate(value: string | Date): string {
   return new Date(value).toISOString();
 }
 
+function normalizeOptionalDate(
+  value: string | Date | null | undefined
+): string | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  return normalizeDate(value);
+}
+
 function toBookingLinks(value: unknown): BookingLinks {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return {};
@@ -113,6 +141,35 @@ function toPackageTier(value: string): PackageTier {
 
 function roundMoney(value: number): number {
   return Math.round(value * 100) / 100;
+}
+
+function toPersistedEvent(
+  tripRequest: TripRequestRow
+): PersistedEventTripResult["event"] {
+  const provider =
+    tripRequest.event_provider === "ticketmaster" ||
+    tripRequest.event_provider === "seatgeek"
+      ? tripRequest.event_provider
+      : null;
+
+  const providerEventId = tripRequest.event_provider_event_id?.trim();
+  const name = tripRequest.event_name?.trim();
+  const startsAt = normalizeOptionalDate(tripRequest.event_starts_at);
+
+  if (!provider || !providerEventId || !name || !startsAt) {
+    return null;
+  }
+
+  return {
+    provider,
+    providerEventId,
+    name,
+    city: tripRequest.event_city?.trim() || undefined,
+    country: tripRequest.event_country?.trim() || undefined,
+    venue: tripRequest.event_venue?.trim() || undefined,
+    startsAt,
+    endsAt: normalizeOptionalDate(tripRequest.event_ends_at),
+  };
 }
 
 function toOverBudgetAmount({
@@ -151,6 +208,7 @@ export function toPersistedEventTripResult({
     maxBudgetPerPerson,
     status: tripRequest.status,
     createdAt: normalizeDate(tripRequest.created_at),
+    event: toPersistedEvent(tripRequest),
     packages: packageRows.map((row) => {
       const pricePerPerson = toNumber(row.price_per_person);
       const withinBudget = Boolean(row.within_budget);

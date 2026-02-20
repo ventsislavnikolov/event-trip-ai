@@ -138,15 +138,19 @@ export async function fetchTravelPayoutsFlights(params: {
       const airline = asString(row.airline);
       const currency = asString(row.currency)?.toUpperCase() ?? defaultCurrency;
       const id = `tp-flight-${origin}-${destination}-${dateKey}`;
-
-      return {
+      const option: TravelPayoutsFlightOption = {
         id,
-        airline,
         origin,
         destination,
         price: Math.round(price * 100) / 100,
         currency,
-      } satisfies TravelPayoutsFlightOption;
+      };
+
+      if (airline) {
+        option.airline = airline;
+      }
+
+      return option;
     })
     .filter((option): option is TravelPayoutsFlightOption => option !== null);
 }

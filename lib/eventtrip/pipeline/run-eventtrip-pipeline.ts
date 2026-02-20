@@ -25,6 +25,22 @@ type EventTripPipelineResult = {
   packages: ReturnType<typeof toPackageCards>;
   degraded: boolean;
   providerFailureSummary: string[];
+  candidates: {
+    id: string;
+    name: string;
+    location?: string;
+    startsAt?: string;
+  }[];
+  selectedEvent: {
+    provider: "ticketmaster" | "seatgeek";
+    providerEventId: string;
+    name: string;
+    city?: string;
+    country?: string;
+    venue?: string;
+    startsAt?: string;
+    endsAt?: string;
+  } | null;
 };
 
 type TravelPayoutsBundle = {
@@ -71,6 +87,79 @@ function getTravelDates(): { departDate: string; returnDate: string } {
     departDate: toIsoDate(departDate),
     returnDate: toIsoDate(returnDate),
   };
+}
+
+function selectPreferredEventCandidate({
+  ticketmasterEvents,
+  seatGeekEvents,
+}: {
+  ticketmasterEvents: TicketmasterEvent[];
+  seatGeekEvents: SeatGeekEvent[];
+}): EventTripPipelineResult["selectedEvent"] {
+  const ticketmasterEvent = ticketmasterEvents[0];
+  if (ticketmasterEvent) {
+    return {
+      provider: "ticketmaster",
+      providerEventId: ticketmasterEvent.id,
+      name: ticketmasterEvent.name,
+      city: ticketmasterEvent.city,
+      country: ticketmasterEvent.country,
+      venue: ticketmasterEvent.venue,
+      startsAt: ticketmasterEvent.startsAt,
+      endsAt: ticketmasterEvent.endsAt,
+    };
+  }
+
+  const seatGeekEvent = seatGeekEvents[0];
+  if (seatGeekEvent) {
+    return {
+      provider: "seatgeek",
+      providerEventId: seatGeekEvent.id,
+      name: seatGeekEvent.title,
+      city: seatGeekEvent.city,
+      country: seatGeekEvent.country,
+      venue: seatGeekEvent.venue,
+      startsAt: seatGeekEvent.startsAt,
+      endsAt: seatGeekEvent.endsAt,
+    };
+  }
+
+  return null;
+}
+
+function toLocation(city?: string, country?: string): string | undefined {
+  const normalizedCity = city?.trim();
+  const normalizedCountry = country?.trim();
+
+  if (normalizedCity && normalizedCountry) {
+    return `${normalizedCity}, ${normalizedCountry}`;
+  }
+
+  return normalizedCity || normalizedCountry || undefined;
+}
+
+function buildEventCandidates({
+  ticketmasterEvents,
+  seatGeekEvents,
+}: {
+  ticketmasterEvents: TicketmasterEvent[];
+  seatGeekEvents: SeatGeekEvent[];
+}): EventTripPipelineResult["candidates"] {
+  const fromTicketmaster = ticketmasterEvents.map((event) => ({
+    id: `ticketmaster:${event.id}`,
+    name: event.name,
+    location: toLocation(event.city, event.country),
+    startsAt: event.startsAt,
+  }));
+
+  const fromSeatGeek = seatGeekEvents.map((event) => ({
+    id: `seatgeek:${event.id}`,
+    name: event.title,
+    location: toLocation(event.city, event.country),
+    startsAt: event.startsAt,
+  }));
+
+  return [...fromTicketmaster, ...fromSeatGeek].slice(0, 5);
 }
 
 function buildProviderPackageOptions({
@@ -176,14 +265,47 @@ export async function runEventTripPipeline({
     },
   });
 
+  const selectedEvent = selectPreferredEventCandidate({
+    ticketmasterEvents: providerResponse.results.ticketmaster ?? [],
+    seatGeekEvents: providerResponse.results.seatgeek ?? [],
+  });
+
+  let travelOptions = providerResponse.results.travelpayouts ?? {
+    flights: [],
+    hotels: [],
+  };
+  const retryDestinationCity = selectedEvent?.city?.trim();
+
+  const shouldRetryTravelWithEventCity =
+    retryDestinationCity &&
+    travelOptions.flights.length === 0 &&
+    retryDestinationCity.toLowerCase() !== destinationCity.trim().toLowerCase();
+
+  if (shouldRetryTravelWithEventCity) {
+    try {
+      const retriedTravelOptions = await activeProviders.travelpayouts({
+        originCity,
+        destinationCity: retryDestinationCity,
+        departDate,
+        returnDate,
+      });
+
+      if (
+        retriedTravelOptions.flights.length > 0 ||
+        retriedTravelOptions.hotels.length > 0
+      ) {
+        travelOptions = retriedTravelOptions;
+      }
+    } catch (_retryError) {
+      // Ignore retry failure and preserve the original provider response.
+    }
+  }
+
   const providerOptions = buildProviderPackageOptions({
     travelers,
     ticketmasterEvents: providerResponse.results.ticketmaster ?? [],
     seatGeekEvents: providerResponse.results.seatgeek ?? [],
-    travel: providerResponse.results.travelpayouts ?? {
-      flights: [],
-      hotels: [],
-    },
+    travel: travelOptions,
   });
   const fallbackOptions = buildFallbackPackageOptions({ travelers });
   const ranked = buildPackages({
@@ -197,5 +319,10 @@ export async function runEventTripPipeline({
     providerFailureSummary: formatProviderFailureSummary(
       providerResponse.failures
     ),
+    candidates: buildEventCandidates({
+      ticketmasterEvents: providerResponse.results.ticketmaster ?? [],
+      seatGeekEvents: providerResponse.results.seatgeek ?? [],
+    }),
+    selectedEvent,
   };
 }

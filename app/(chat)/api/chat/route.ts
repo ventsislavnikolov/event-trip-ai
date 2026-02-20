@@ -192,8 +192,10 @@ export async function POST(request: Request) {
       }
 
       if (intentGateResult.intent) {
+        const resolvedIntent = intentGateResult.intent;
+
         const pipelineResult = await runEventTripPipeline({
-          intent: intentGateResult.intent,
+          intent: resolvedIntent,
         });
 
         const summaryLine = pipelineResult.degraded
@@ -208,6 +210,13 @@ export async function POST(request: Request) {
               type: "data-eventtripPackages",
               data: pipelineResult.packages,
             });
+
+            if (pipelineResult.candidates.length > 0) {
+              writer.write({
+                type: "data-eventtripCandidates",
+                data: pipelineResult.candidates,
+              });
+            }
 
             const textPartId = generateUUID();
             writer.write({ type: "text-start", id: textPartId });
@@ -240,8 +249,9 @@ export async function POST(request: Request) {
             try {
               await saveEventTripPipelineResult({
                 chatId: id,
-                intent: intentGateResult.intent,
+                intent: resolvedIntent,
                 packages: pipelineResult.packages,
+                selectedEvent: pipelineResult.selectedEvent,
               });
             } catch (error) {
               console.warn(

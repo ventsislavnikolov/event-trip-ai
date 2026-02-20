@@ -24,7 +24,7 @@ Completed on `main`:
 
 Outstanding follow-ups:
 - Harden provider data normalization (event resolution and airport code mapping) for higher live-query hit rate.
-- Expand client/product usage of persisted EventTrip rows (`et_trip_requests`, `et_package_options`) and connect `et_events` linkage.
+- Expand client/product usage of persisted EventTrip rows (`et_trip_requests`, `et_package_options`) and linked `et_events` metadata.
 - Keep docs/checklists in sync with implementation deltas.
 
 ---

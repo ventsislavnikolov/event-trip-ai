@@ -13,6 +13,14 @@ test("toPersistedEventTripResult maps persisted rows into UI package shape", () 
       max_budget_per_person: "500.00",
       status: "ready",
       created_at: "2026-02-20T12:00:00.000Z",
+      event_provider: "ticketmaster",
+      event_provider_event_id: "tm-1",
+      event_name: "Tomorrowland 2026",
+      event_city: "Boom",
+      event_country: "BE",
+      event_venue: "Main Stage",
+      event_starts_at: "2026-07-20T18:00:00.000Z",
+      event_ends_at: "2026-07-22T23:00:00.000Z",
     },
     packageRows: [
       {
@@ -57,6 +65,10 @@ test("toPersistedEventTripResult maps persisted rows into UI package shape", () 
   assert.equal(result.eventQuery, "Tomorrowland 2026");
   assert.equal(result.originCity, "Sofia");
   assert.equal(result.maxBudgetPerPerson, 500);
+  assert.equal(result.event?.provider, "ticketmaster");
+  assert.equal(result.event?.providerEventId, "tm-1");
+  assert.equal(result.event?.city, "Boom");
+  assert.equal(result.event?.startsAt, "2026-07-20T18:00:00.000Z");
   assert.equal(result.packages.length, 2);
   assert.equal(result.packages[0]?.tier, "Budget");
   assert.equal(result.packages[0]?.overBudgetAmount, 0);

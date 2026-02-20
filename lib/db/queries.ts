@@ -25,6 +25,8 @@ import {
 } from "../eventtrip/persistence/read-model";
 import {
   type EventTripPackageCard,
+  type EventTripSelectedEvent,
+  toEventTripEventRow,
   toEventTripPackageOptionRows,
   toEventTripTripRequestRow,
 } from "../eventtrip/persistence/serialize";
@@ -616,18 +618,59 @@ export async function saveEventTripPipelineResult({
   chatId,
   intent,
   packages,
+  selectedEvent,
 }: {
   chatId: string;
   intent: EventTripIntent;
   packages: EventTripPackageCard[];
+  selectedEvent?: EventTripSelectedEvent | null;
 }) {
   const tripRequestRow = toEventTripTripRequestRow({ chatId, intent });
+  const eventRow = toEventTripEventRow(selectedEvent);
 
   try {
     return await client.begin(async (tx) => {
+      let eventId: string | null = null;
+
+      if (eventRow) {
+        const upsertedEvents = await tx<{ id: string }[]>`
+          insert into public.et_events (
+            provider,
+            provider_event_id,
+            name,
+            city,
+            country,
+            venue,
+            starts_at,
+            ends_at
+          )
+          values (
+            ${eventRow.provider},
+            ${eventRow.providerEventId},
+            ${eventRow.name},
+            ${eventRow.city},
+            ${eventRow.country},
+            ${eventRow.venue},
+            ${eventRow.startsAt},
+            ${eventRow.endsAt}
+          )
+          on conflict (provider, provider_event_id) do update set
+            name = excluded.name,
+            city = excluded.city,
+            country = excluded.country,
+            venue = excluded.venue,
+            starts_at = excluded.starts_at,
+            ends_at = excluded.ends_at
+          returning id
+        `;
+
+        eventId = upsertedEvents[0]?.id ?? null;
+      }
+
       const insertedTripRequests = await tx<{ id: string }[]>`
         insert into public.et_trip_requests (
           chat_id,
+          event_id,
           event_query,
           origin_city,
           travelers,
@@ -636,6 +679,7 @@ export async function saveEventTripPipelineResult({
         )
         values (
           ${tripRequestRow.chatId},
+          ${eventId},
           ${tripRequestRow.eventQuery},
           ${tripRequestRow.originCity},
           ${tripRequestRow.travelers},
@@ -704,17 +748,26 @@ export async function getLatestEventTripResultByChatId({
   try {
     const tripRequests = await client<EventTripTripRequestRow[]>`
       select
-        id,
-        chat_id,
-        event_query,
-        origin_city,
-        travelers,
-        max_budget_per_person,
-        status,
-        created_at
-      from public.et_trip_requests
-      where chat_id = ${chatId}
-      order by created_at desc
+        tr.id,
+        tr.chat_id,
+        tr.event_query,
+        tr.origin_city,
+        tr.travelers,
+        tr.max_budget_per_person,
+        tr.status,
+        tr.created_at,
+        ev.provider as event_provider,
+        ev.provider_event_id as event_provider_event_id,
+        ev.name as event_name,
+        ev.city as event_city,
+        ev.country as event_country,
+        ev.venue as event_venue,
+        ev.starts_at as event_starts_at,
+        ev.ends_at as event_ends_at
+      from public.et_trip_requests tr
+      left join public.et_events ev on ev.id = tr.event_id
+      where tr.chat_id = ${chatId}
+      order by tr.created_at desc
       limit 1
     `;
 

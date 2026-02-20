@@ -10,12 +10,15 @@ Live in `main`:
 - Environment-gated provider adapters for Ticketmaster, SeatGeek, and Travelpayouts.
 - Provider-informed package option construction (flight/hotel inputs are used when available, with deterministic fallback preserved).
 - Best-effort persistence of EventTrip trip/package results into `et_trip_requests` and `et_package_options`.
-- Read API for latest persisted EventTrip result per chat (`GET /api/chat/:id/eventtrip`).
+- Read API for latest persisted EventTrip result per chat (`GET /api/chat/:id/eventtrip`), including linked event metadata when available.
+- `et_events` linkage for persisted trips when provider event metadata includes a usable start time.
+- Normalized event candidates streamed to UI (`data-eventtripCandidates`) from provider search results.
+- Travel provider retry fallback that re-queries with selected event city when the raw event query returns no flight options.
 
 Not yet wired in runtime:
 - Curated event index integration and robust event resolution across multiple provider candidates.
 - Reliable city-to-airport normalization for Travelpayouts flight lookups.
-- EventTrip `et_events` linkage and client-side reuse of persisted trip/package data in product surfaces.
+- Broader client/product usage of linked `et_events` metadata in product surfaces.
 
 This document keeps the target architecture for upcoming slices; use this snapshot as the current-state source of truth.
 
