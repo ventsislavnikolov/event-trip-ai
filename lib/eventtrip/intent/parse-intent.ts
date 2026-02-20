@@ -5,21 +5,22 @@ import {
   getFollowUpQuestion,
   getMissingIntentFields,
   type ParsedIntentResult,
+  validateEventTripIntent,
 } from "./schema";
 
 type GenerateObjectLike = (options: {
   model: LanguageModel;
   schema: typeof eventTripIntentExtractionSchema;
   prompt: string;
-}) => Promise<{ object: EventTripIntent }>;
+}) => Promise<{ object: unknown }>;
 
 async function defaultGenerateObject(options: {
   model: LanguageModel;
   schema: typeof eventTripIntentExtractionSchema;
   prompt: string;
-}): Promise<{ object: EventTripIntent }> {
+}): Promise<{ object: unknown }> {
   const result = await generateObject(options);
-  return { object: result.object as EventTripIntent };
+  return { object: result.object };
 }
 
 function extractIntentWithFallback(text: string): EventTripIntent {
@@ -101,7 +102,13 @@ export async function parseIntentFromText({
       prompt: buildIntentExtractionPrompt(normalizedText),
     });
 
-    return eventTripIntentExtractionSchema.parse(object);
+    const validatedIntent = validateEventTripIntent(object);
+
+    if (!validatedIntent.success) {
+      throw new Error("Invalid intent schema payload");
+    }
+
+    return validatedIntent.data;
   }
 
   let parsedIntent: EventTripIntent;

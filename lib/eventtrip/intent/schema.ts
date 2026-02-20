@@ -1,56 +1,49 @@
 import { z } from "zod";
 
-const optionalStringField = z.preprocess(
-  (value) => {
-    if (typeof value !== "string") {
-      return value;
-    }
+const optionalStringField = z.preprocess((value) => {
+  if (typeof value !== "string") {
+    return value;
+  }
 
-    const trimmed = value.trim();
-    return trimmed.length > 0 ? trimmed : undefined;
-  },
-  z.string().min(1).optional()
-);
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}, z.string().min(1).optional());
 
-const optionalTravelersField = z.preprocess(
-  (value) => {
-    if (typeof value === "number") {
-      return value;
-    }
+const optionalTravelersField = z.preprocess((value) => {
+  if (typeof value === "number") {
+    return value;
+  }
 
-    if (typeof value === "string") {
-      const parsed = Number.parseInt(value, 10);
-      return Number.isNaN(parsed) ? undefined : parsed;
-    }
+  if (typeof value === "string") {
+    const parsed = Number.parseInt(value, 10);
+    return Number.isNaN(parsed) ? undefined : parsed;
+  }
 
-    return undefined;
-  },
-  z.number().int().positive().optional()
-);
+  return undefined;
+}, z.number().int().positive().optional());
 
-const optionalBudgetField = z.preprocess(
-  (value) => {
-    if (typeof value === "number") {
-      return value;
-    }
+const optionalBudgetField = z.preprocess((value) => {
+  if (typeof value === "number") {
+    return value;
+  }
 
-    if (typeof value === "string") {
-      const normalized = value.replace(",", ".").replace(/[^0-9.]/g, "");
-      const parsed = Number.parseFloat(normalized);
-      return Number.isNaN(parsed) ? undefined : parsed;
-    }
+  if (typeof value === "string") {
+    const normalized = value.replace(",", ".").replace(/[^0-9.]/g, "");
+    const parsed = Number.parseFloat(normalized);
+    return Number.isNaN(parsed) ? undefined : parsed;
+  }
 
-    return undefined;
-  },
-  z.number().positive().optional()
-);
+  return undefined;
+}, z.number().positive().optional());
 
-export const eventTripIntentExtractionSchema = z.object({
-  event: optionalStringField,
-  originCity: optionalStringField,
-  travelers: optionalTravelersField,
-  maxBudgetPerPerson: optionalBudgetField,
-});
+export const eventTripIntentExtractionSchema = z
+  .object({
+    event: optionalStringField,
+    originCity: optionalStringField,
+    travelers: optionalTravelersField,
+    maxBudgetPerPerson: optionalBudgetField,
+  })
+  .strict();
 
 export type EventTripIntent = z.infer<typeof eventTripIntentExtractionSchema>;
 
@@ -66,6 +59,10 @@ export type ParsedIntentResult = {
   followUpQuestion: string | null;
 };
 
+export function validateEventTripIntent(input: unknown) {
+  return eventTripIntentExtractionSchema.safeParse(input);
+}
+
 const REQUIRED_FIELDS: IntentField[] = [
   "event",
   "originCity",
@@ -80,7 +77,9 @@ export function getMissingIntentFields(intent: EventTripIntent): IntentField[] {
   });
 }
 
-export function getFollowUpQuestion(missingFields: IntentField[]): string | null {
+export function getFollowUpQuestion(
+  missingFields: IntentField[]
+): string | null {
   const nextMissingField = missingFields[0];
 
   if (!nextMissingField) {
