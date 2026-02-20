@@ -4,10 +4,9 @@ import { createApiSuccessResponse } from "@/lib/api/contracts";
 import {
   deleteAllChatsByUserId,
   getChatsByUserId,
-  getLatestEventTripResultByChatId,
+  getLatestEventTripSummariesByChatIds,
 } from "@/lib/db/queries";
 import { ChatSDKError } from "@/lib/errors";
-import type { EventTripHistorySummary } from "@/lib/eventtrip/persistence/history-summary";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
@@ -36,37 +35,24 @@ export async function GET(request: NextRequest) {
     endingBefore,
   });
 
-  const chatsWithEventTripSummary = await Promise.all(
-    chats.chats.map(async (chat) => {
-      const latestEventTrip = await getLatestEventTripResultByChatId({
-        chatId: chat.id,
-      });
-
-      if (!latestEventTrip) {
-        return chat;
-      }
-
-      const summary: EventTripHistorySummary = {
-        eventQuery: latestEventTrip.eventQuery,
-        originCity: latestEventTrip.originCity,
-        travelers: latestEventTrip.travelers,
-        maxBudgetPerPerson: latestEventTrip.maxBudgetPerPerson,
-        event: latestEventTrip.event
-          ? {
-              name: latestEventTrip.event.name,
-              city: latestEventTrip.event.city,
-              country: latestEventTrip.event.country,
-              startsAt: latestEventTrip.event.startsAt,
-            }
-          : null,
-      };
-
-      return {
-        ...chat,
-        eventTripSummary: summary,
-      };
-    })
+  const eventTripSummariesByChatId = await getLatestEventTripSummariesByChatIds(
+    {
+      chatIds: chats.chats.map((chat) => chat.id),
+    }
   );
+
+  const chatsWithEventTripSummary = chats.chats.map((chat) => {
+    const eventTripSummary = eventTripSummariesByChatId[chat.id];
+
+    if (!eventTripSummary) {
+      return chat;
+    }
+
+    return {
+      ...chat,
+      eventTripSummary,
+    };
+  });
 
   return createApiSuccessResponse({
     ...chats,

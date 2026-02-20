@@ -21,6 +21,7 @@ Live in `main`:
 - Airport-code normalization is now centralized in a dedicated resolver module with alias and suffix-aware matching.
 - Event selection now uses deterministic name-match scoring across provider candidates when explicit selection is not provided.
 - Sidebar chat history now includes persisted EventTrip summary metadata per chat (`eventTripSummary`) from `et_trip_requests`/`et_events`.
+- History summary enrichment now uses batched EventTrip lookup by chat IDs to avoid per-chat query fanout.
 
 Not yet wired in runtime:
 - Curated event index integration and robust event resolution across multiple provider candidates.

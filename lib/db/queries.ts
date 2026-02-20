@@ -18,6 +18,7 @@ import type { ArtifactKind } from "@/components/artifact";
 import type { VisibilityType } from "@/components/visibility-selector";
 import { ChatSDKError } from "../errors";
 import type { EventTripIntent } from "../eventtrip/intent/schema";
+import type { EventTripHistorySummary } from "../eventtrip/persistence/history-summary";
 import {
   type EventTripPackageOptionRow,
   type EventTripTripRequestRow,
@@ -809,6 +810,109 @@ export async function getLatestEventTripResultByChatId({
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to load latest EventTrip result by chat id"
+    );
+  }
+}
+
+type EventTripHistorySummaryRow = {
+  chat_id: string;
+  event_query: string;
+  origin_city: string;
+  travelers: number;
+  max_budget_per_person: string | number | null;
+  event_name: string | null;
+  event_city: string | null;
+  event_country: string | null;
+  event_starts_at: string | Date | null;
+};
+
+function toNullableNumber(value: string | number | null): number | null {
+  if (value === null) {
+    return null;
+  }
+
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    const parsed = Number.parseFloat(value);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+
+  return null;
+}
+
+function toOptionalIsoDate(value: string | Date | null): string | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return undefined;
+  }
+
+  return parsed.toISOString();
+}
+
+export async function getLatestEventTripSummariesByChatIds({
+  chatIds,
+}: {
+  chatIds: string[];
+}): Promise<Record<string, EventTripHistorySummary>> {
+  if (chatIds.length === 0) {
+    return {};
+  }
+
+  try {
+    const rows = await client<EventTripHistorySummaryRow[]>`
+      select distinct on (tr.chat_id)
+        tr.chat_id,
+        tr.event_query,
+        tr.origin_city,
+        tr.travelers,
+        tr.max_budget_per_person,
+        ev.name as event_name,
+        ev.city as event_city,
+        ev.country as event_country,
+        ev.starts_at as event_starts_at
+      from public.et_trip_requests tr
+      left join public.et_events ev on ev.id = tr.event_id
+      where tr.chat_id::text = any(${chatIds})
+      order by tr.chat_id, tr.created_at desc
+    `;
+
+    const summariesByChatId: Record<string, EventTripHistorySummary> = {};
+
+    for (const row of rows) {
+      summariesByChatId[row.chat_id] = {
+        eventQuery: row.event_query,
+        originCity: row.origin_city,
+        travelers: row.travelers,
+        maxBudgetPerPerson: toNullableNumber(row.max_budget_per_person),
+        event: row.event_name
+          ? {
+              name: row.event_name,
+              city: row.event_city ?? undefined,
+              country: row.event_country ?? undefined,
+              startsAt: toOptionalIsoDate(row.event_starts_at),
+            }
+          : null,
+      };
+    }
+
+    return summariesByChatId;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to load latest EventTrip summaries by chat ids"
     );
   }
 }
