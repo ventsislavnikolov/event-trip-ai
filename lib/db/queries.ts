@@ -17,6 +17,12 @@ import postgres from "postgres";
 import type { ArtifactKind } from "@/components/artifact";
 import type { VisibilityType } from "@/components/visibility-selector";
 import { ChatSDKError } from "../errors";
+import type { EventTripIntent } from "../eventtrip/intent/schema";
+import {
+  type EventTripPackageCard,
+  toEventTripPackageOptionRows,
+  toEventTripTripRequestRow,
+} from "../eventtrip/persistence/serialize";
 import { generateUUID } from "../utils";
 import {
   type Chat,
@@ -597,6 +603,90 @@ export async function getStreamIdsByChatId({ chatId }: { chatId: string }) {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get stream ids by chat id"
+    );
+  }
+}
+
+export async function saveEventTripPipelineResult({
+  chatId,
+  intent,
+  packages,
+}: {
+  chatId: string;
+  intent: EventTripIntent;
+  packages: EventTripPackageCard[];
+}) {
+  const tripRequestRow = toEventTripTripRequestRow({ chatId, intent });
+
+  try {
+    return await client.begin(async (tx) => {
+      const insertedTripRequests = await tx<{ id: string }[]>`
+        insert into public.et_trip_requests (
+          chat_id,
+          event_query,
+          origin_city,
+          travelers,
+          max_budget_per_person,
+          status
+        )
+        values (
+          ${tripRequestRow.chatId},
+          ${tripRequestRow.eventQuery},
+          ${tripRequestRow.originCity},
+          ${tripRequestRow.travelers},
+          ${tripRequestRow.maxBudgetPerPerson},
+          ${tripRequestRow.status}
+        )
+        returning id
+      `;
+
+      const tripRequestId = insertedTripRequests[0]?.id;
+
+      if (!tripRequestId) {
+        throw new Error("Failed to insert et_trip_requests row");
+      }
+
+      const packageRows = toEventTripPackageOptionRows({
+        tripRequestId,
+        travelers: tripRequestRow.travelers,
+        packages,
+      });
+
+      for (const row of packageRows) {
+        await tx`
+          insert into public.et_package_options (
+            trip_request_id,
+            tier,
+            total_price,
+            price_per_person,
+            within_budget,
+            ticket_price,
+            flight_price,
+            hotel_price,
+            currency,
+            outbound_links
+          )
+          values (
+            ${row.tripRequestId},
+            ${row.tier},
+            ${row.totalPrice},
+            ${row.pricePerPerson},
+            ${row.withinBudget},
+            ${row.ticketPrice},
+            ${row.flightPrice},
+            ${row.hotelPrice},
+            ${row.currency},
+            ${JSON.stringify(row.outboundLinks)}
+          )
+        `;
+      }
+
+      return { tripRequestId };
+    });
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to save EventTrip pipeline result"
     );
   }
 }

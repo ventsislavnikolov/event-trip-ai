@@ -22,6 +22,7 @@ import {
   getMessageCountByUserId,
   getMessagesByChatId,
   saveChat,
+  saveEventTripPipelineResult,
   saveMessages,
   updateChatTitleById,
   updateMessage,
@@ -234,6 +235,20 @@ export async function POST(request: Request) {
                   chatId: id,
                 })),
               });
+            }
+
+            try {
+              await saveEventTripPipelineResult({
+                chatId: id,
+                intent: intentGateResult.intent,
+                packages: pipelineResult.packages,
+              });
+            } catch (error) {
+              console.warn(
+                "Failed to persist EventTrip pipeline result",
+                id,
+                error
+              );
             }
           },
           onError: () => "Oops, an error occurred!",

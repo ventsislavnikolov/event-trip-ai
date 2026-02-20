@@ -8,11 +8,13 @@ Live in `main`:
 - Deterministic package ranking and UI rendering for package cards/disambiguation.
 - Resilient provider collector orchestration (timeouts, retries, degraded mode) with tests and CI smoke coverage.
 - Environment-gated provider adapters for Ticketmaster, SeatGeek, and Travelpayouts.
+- Provider-informed package option construction (flight/hotel inputs are used when available, with deterministic fallback preserved).
+- Best-effort persistence of EventTrip trip/package results into `et_trip_requests` and `et_package_options`.
 
 Not yet wired in runtime:
 - Curated event index integration and robust event resolution across multiple provider candidates.
 - Reliable city-to-airport normalization for Travelpayouts flight lookups.
-- EventTrip `et_*` table persistence/reads in application flow (migration exists, runtime repository usage is pending).
+- EventTrip `et_events` linkage and read-path usage of persisted trip/package data in product surfaces.
 
 This document keeps the target architecture for upcoming slices; use this snapshot as the current-state source of truth.
 

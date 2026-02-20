@@ -24,7 +24,7 @@ Completed on `main`:
 
 Outstanding follow-ups:
 - Harden provider data normalization (event resolution and airport code mapping) for higher live-query hit rate.
-- Wire runtime persistence/reads for EventTrip tables (`et_*`) beyond migration-only state.
+- Add read-side usage for persisted EventTrip rows (`et_trip_requests`, `et_package_options`) and connect `et_events` linkage.
 - Keep docs/checklists in sync with implementation deltas.
 
 ---
