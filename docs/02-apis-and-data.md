@@ -1,5 +1,12 @@
 # 🔌 EventTrip.ai — APIs & Data Sources
 
+## Integration Snapshot (2026-02-20)
+
+- API error envelope contract is implemented (`ok/data` and `ok/error`) and used by updated routes.
+- Provider orchestrator resilience is implemented (timeouts/retries/degraded mode), with live provider adapters enabled when credentials are configured.
+- Ticketmaster/SeatGeek/Travelpayouts credentials are scaffolded in environment policy and used by runtime adapters.
+- Remaining API work is mainly data-quality hardening (event resolution, airport normalization, curated-source merging).
+
 ## Event Discovery APIs
 
 | API | Какво дава | Цена | Coverage | Verdict |

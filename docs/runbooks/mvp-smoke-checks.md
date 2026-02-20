@@ -43,7 +43,7 @@ pnpm build
 
 Run the dedicated core-flow test:
 ```bash
-pnpm exec playwright test tests/e2e/core-flow.spec.ts --project=e2e
+pnpm exec playwright test tests/e2e/core-flow.test.ts --project=e2e
 ```
 
 Checks covered:
@@ -58,7 +58,7 @@ Release is blocked unless all of the following are true:
 - Typecheck passes.
 - Smoke/unit tests pass.
 - `pnpm build` passes.
-- `tests/e2e/core-flow.spec.ts` passes.
+- `tests/e2e/core-flow.test.ts` passes.
 - Preview/production environment keys pass `pnpm env:check:preview` and `pnpm env:check:production`.
 
 ## Rollback Notes

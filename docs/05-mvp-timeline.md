@@ -3,32 +3,32 @@
 ## Timeline (1 Developer, 7 Weeks)
 
 ### Week 1-2: Template Baseline + Data Foundation
-- [ ] Bootstrap from `vercel/ai-chatbot` template
-- [ ] Remove non-MVP template features
-- [ ] Configure Vercel environments and required secrets
-- [ ] Set up Supabase Postgres and base migrations
-- [ ] Add CI baseline (typecheck, lint, unit tests)
-- [ ] Establish core API error envelope and response contracts
+- [x] Bootstrap from `vercel/ai-chatbot` template
+- [x] Remove non-MVP template features
+- [x] Configure Vercel environments and required secrets
+- [x] Set up Supabase Postgres and base migrations
+- [x] Add CI baseline (typecheck, lint, unit tests)
+- [x] Establish core API error envelope and response contracts
 
 ### Week 3-4: Intent + Data Providers + Package Engine
-- [ ] AI SDK intent parsing with strict schema validation
-- [ ] Missing-field follow-up flow
+- [x] AI SDK intent parsing with strict schema validation
+- [x] Missing-field follow-up flow
 - [ ] Event resolution across Ticketmaster, SeatGeek, curated index
-- [ ] Travel collectors (flight + hotel) with timeout controls
-- [ ] Deterministic package ranking (`Budget`, `Best Value`, `Premium`)
-- [ ] Over-budget fallback and annotations
+- [x] Travel collectors (flight + hotel) with timeout controls
+- [x] Deterministic package ranking (`Budget`, `Best Value`, `Premium`)
+- [x] Over-budget fallback and annotations
 
 ### Week 5: Product UX and Reliability
 - [ ] Smart prompt UI and conversation state model
-- [ ] Event disambiguation picker UI
-- [ ] Package result cards with line-item pricing
+- [x] Event disambiguation picker UI
+- [x] Package result cards with line-item pricing
 - [ ] Outbound booking link tracking
 - [ ] Observability logs for parse, provider latency, and package generation
 - [ ] Request deadline and graceful fallback states
 
 ### Week 6: Hardening and Launch Readiness
-- [ ] Regression suite for core prompt-to-package flow
-- [ ] Production smoke checks and rollback notes
+- [x] Regression suite for core prompt-to-package flow
+- [x] Production smoke checks and rollback notes
 - [ ] SEO metadata and sharing previews
 - [ ] Funnel analytics events
 - [ ] Performance pass (P95 within target budget)

@@ -10,6 +10,25 @@
 
 ---
 
+## Execution Status (2026-02-20)
+
+Completed on `main`:
+- Task 1: Template bootstrap
+- Task 2: MVP surface pruning
+- Task 3: Supabase Postgres wiring + base migration
+- Task 4: Intent parsing + strict schema validation + follow-up interruption
+- Task 5: Deterministic package engine
+- Task 6: Provider collector orchestration (timeouts/retries/degraded mode)
+- Task 7: Package cards + disambiguation UI integration
+- Task 8: Verification gates + smoke runbook + CI stabilization
+
+Outstanding follow-ups:
+- Harden provider data normalization (event resolution and airport code mapping) for higher live-query hit rate.
+- Wire runtime persistence/reads for EventTrip tables (`et_*`) beyond migration-only state.
+- Keep docs/checklists in sync with implementation deltas.
+
+---
+
 **Skill references:** @writing-plans @linear @test-driven-development @verification-before-completion
 
 ## Preconditions
@@ -239,7 +258,7 @@ git commit -m "feat: implement mvp trip result and disambiguation ui"
 **Files:**
 - Create: `docs/runbooks/mvp-smoke-checks.md`
 - Modify: `.github/workflows/ci.yml`
-- Test: `tests/e2e/core-flow.spec.ts`
+- Test: `tests/e2e/core-flow.test.ts`
 
 **Step 1: Write failing end-to-end happy-path + degraded-path test**
 
@@ -253,7 +272,7 @@ Expected: all PASS.
 **Step 4: Commit**
 
 ```bash
-git add .github/workflows/ci.yml docs/runbooks/mvp-smoke-checks.md tests/e2e/core-flow.spec.ts
+git add .github/workflows/ci.yml docs/runbooks/mvp-smoke-checks.md tests/e2e/core-flow.test.ts
 git commit -m "chore: add verification gates and launch smoke checklist"
 ```
 

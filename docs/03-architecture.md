@@ -1,5 +1,21 @@
 # 🏗️ EventTrip.ai — Architecture & Database Schema
 
+## Implementation Snapshot (2026-02-20)
+
+Live in `main`:
+- Chat SDK baseline app with EventTrip intent gate and pipeline wiring.
+- Strict intent schema validation with provider-aware model routing (`openai/*` adapter path + default structured extraction path).
+- Deterministic package ranking and UI rendering for package cards/disambiguation.
+- Resilient provider collector orchestration (timeouts, retries, degraded mode) with tests and CI smoke coverage.
+- Environment-gated provider adapters for Ticketmaster, SeatGeek, and Travelpayouts.
+
+Not yet wired in runtime:
+- Curated event index integration and robust event resolution across multiple provider candidates.
+- Reliable city-to-airport normalization for Travelpayouts flight lookups.
+- EventTrip `et_*` table persistence/reads in application flow (migration exists, runtime repository usage is pending).
+
+This document keeps the target architecture for upcoming slices; use this snapshot as the current-state source of truth.
+
 ## System Architecture
 
 ```
