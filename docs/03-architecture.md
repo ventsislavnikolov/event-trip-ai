@@ -204,6 +204,11 @@ Package Builder (3 tiers):
 AI Summary (Claude) → human-friendly recommendation
 ```
 
+Current implementation note:
+- `parseIntent` uses model-id routing for provider-specific adapters.
+- `openai/*` models go through a dedicated OpenAI adapter prompt path.
+- non-OpenAI models use the default schema-extraction prompt path.
+
 ### Intent Parser Example
 
 ```typescript

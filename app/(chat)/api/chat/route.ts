@@ -138,9 +138,11 @@ export async function POST(request: Request) {
       const intentGateResult = await buildIntentGateResult({
         message,
         model: getLanguageModel(primaryModelId),
+        modelId: primaryModelId,
         fallbackModel: fallbackModelId
           ? getLanguageModel(fallbackModelId)
           : undefined,
+        fallbackModelId: fallbackModelId ?? undefined,
       });
 
       if (
