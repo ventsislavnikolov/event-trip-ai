@@ -92,10 +92,57 @@ function getTravelDates(): { departDate: string; returnDate: string } {
 function selectPreferredEventCandidate({
   ticketmasterEvents,
   seatGeekEvents,
+  selectedEventCandidateId,
 }: {
   ticketmasterEvents: TicketmasterEvent[];
   seatGeekEvents: SeatGeekEvent[];
+  selectedEventCandidateId?: string;
 }): EventTripPipelineResult["selectedEvent"] {
+  const normalizedSelectedCandidateId =
+    selectedEventCandidateId?.trim().toLowerCase() ?? "";
+
+  if (normalizedSelectedCandidateId.startsWith("ticketmaster:")) {
+    const ticketmasterId = normalizedSelectedCandidateId.slice(
+      "ticketmaster:".length
+    );
+    const selectedTicketmasterEvent = ticketmasterEvents.find(
+      (event) => event.id.toLowerCase() === ticketmasterId
+    );
+
+    if (selectedTicketmasterEvent) {
+      return {
+        provider: "ticketmaster",
+        providerEventId: selectedTicketmasterEvent.id,
+        name: selectedTicketmasterEvent.name,
+        city: selectedTicketmasterEvent.city,
+        country: selectedTicketmasterEvent.country,
+        venue: selectedTicketmasterEvent.venue,
+        startsAt: selectedTicketmasterEvent.startsAt,
+        endsAt: selectedTicketmasterEvent.endsAt,
+      };
+    }
+  }
+
+  if (normalizedSelectedCandidateId.startsWith("seatgeek:")) {
+    const seatGeekId = normalizedSelectedCandidateId.slice("seatgeek:".length);
+    const selectedSeatGeekEvent = seatGeekEvents.find(
+      (event) => event.id.toLowerCase() === seatGeekId
+    );
+
+    if (selectedSeatGeekEvent) {
+      return {
+        provider: "seatgeek",
+        providerEventId: selectedSeatGeekEvent.id,
+        name: selectedSeatGeekEvent.title,
+        city: selectedSeatGeekEvent.city,
+        country: selectedSeatGeekEvent.country,
+        venue: selectedSeatGeekEvent.venue,
+        startsAt: selectedSeatGeekEvent.startsAt,
+        endsAt: selectedSeatGeekEvent.endsAt,
+      };
+    }
+  }
+
   const ticketmasterEvent = ticketmasterEvents[0];
   if (ticketmasterEvent) {
     return {
@@ -268,6 +315,7 @@ export async function runEventTripPipeline({
   const selectedEvent = selectPreferredEventCandidate({
     ticketmasterEvents: providerResponse.results.ticketmaster ?? [],
     seatGeekEvents: providerResponse.results.seatgeek ?? [],
+    selectedEventCandidateId: intent.selectedEventCandidateId,
   });
 
   let travelOptions = providerResponse.results.travelpayouts ?? {

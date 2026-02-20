@@ -4,6 +4,7 @@ import { useMessages } from "@/hooks/use-messages";
 import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
 import { useDataStream } from "./data-stream-provider";
+import type { EventCandidate } from "./eventtrip/disambiguation-picker";
 import { Greeting } from "./greeting";
 import { PreviewMessage, ThinkingMessage } from "./message";
 
@@ -15,6 +16,7 @@ type MessagesProps = {
   messages: ChatMessage[];
   setMessages: UseChatHelpers<ChatMessage>["setMessages"];
   regenerate: UseChatHelpers<ChatMessage>["regenerate"];
+  onSelectEventCandidate?: (candidate: EventCandidate) => void;
   isReadonly: boolean;
   isArtifactVisible: boolean;
   selectedModelId: string;
@@ -28,6 +30,7 @@ function PureMessages({
   messages,
   setMessages,
   regenerate,
+  onSelectEventCandidate,
   isReadonly,
   selectedModelId: _selectedModelId,
 }: MessagesProps) {
@@ -62,6 +65,7 @@ function PureMessages({
               isReadonly={isReadonly}
               key={message.id}
               message={message}
+              onSelectEventCandidate={onSelectEventCandidate}
               regenerate={regenerate}
               requiresScrollPadding={
                 hasSentMessage && index === messages.length - 1

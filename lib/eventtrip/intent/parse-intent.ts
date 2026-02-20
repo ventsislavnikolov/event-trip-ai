@@ -13,6 +13,14 @@ import {
   validateEventTripIntent,
 } from "./schema";
 
+function extractSelectedCandidateId(text: string): string | undefined {
+  const selectedCandidateIdMatch = text.match(
+    /\bcandidate\s+id:\s*([a-z0-9_-]+:[a-z0-9_-]+)\b/i
+  );
+
+  return selectedCandidateIdMatch?.[1]?.trim();
+}
+
 async function defaultGenerateObject(options: {
   model: LanguageModel;
   schema: typeof eventTripIntentExtractionSchema;
@@ -25,7 +33,21 @@ async function defaultGenerateObject(options: {
 function extractIntentWithFallback(text: string): EventTripIntent {
   const fallback: EventTripIntent = {};
 
-  const fromMatch = text.match(/\bfrom\s+([a-zA-Z][a-zA-Z\s-]{1,40})/i);
+  const selectedCandidateId = extractSelectedCandidateId(text);
+  if (selectedCandidateId) {
+    fallback.selectedEventCandidateId = selectedCandidateId;
+  }
+
+  const explicitEventMatch = text.match(
+    /\bi\s+choose\s+this\s+event:\s*(.+?)(?=\.|$)/i
+  );
+  if (explicitEventMatch?.[1]) {
+    fallback.event = explicitEventMatch[1].trim();
+  }
+
+  const fromMatch = text.match(
+    /\bfrom\s+([a-zA-Z][a-zA-Z\s-]{1,40}?)(?=\s+(?:for|with|max|budget|under|up to)\b|[.,]|$)/i
+  );
   if (fromMatch) {
     fallback.originCity = fromMatch[1]?.trim();
   }
@@ -51,7 +73,7 @@ function extractIntentWithFallback(text: string): EventTripIntent {
   }
 
   const normalized = text.trim();
-  if (normalized.length > 0) {
+  if (normalized.length > 0 && !fallback.event) {
     fallback.event = normalized;
   }
 
@@ -62,6 +84,7 @@ function buildIntentExtractionPrompt(text: string): string {
   return [
     "Extract EventTrip intent fields from this user request.",
     "Return only the structured fields using the provided schema.",
+    "If the user selected a disambiguation candidate, map it to selectedEventCandidateId.",
     "If a field is unknown, leave it undefined.",
     "",
     `User request: ${text}`,
@@ -141,6 +164,16 @@ export async function parseIntentFromText({
 
   if (!parsedIntent) {
     parsedIntent = extractIntentWithFallback(normalizedText);
+  }
+
+  if (!parsedIntent.selectedEventCandidateId) {
+    const selectedCandidateId = extractSelectedCandidateId(normalizedText);
+    if (selectedCandidateId) {
+      parsedIntent = {
+        ...parsedIntent,
+        selectedEventCandidateId: selectedCandidateId,
+      };
+    }
   }
 
   const missingFields = getMissingIntentFields(parsedIntent);

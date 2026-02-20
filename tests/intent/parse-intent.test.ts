@@ -128,3 +128,36 @@ test("uses fallback model when primary model returns invalid strict-schema paylo
   assert.deepEqual(result.missingFields, []);
   assert.deepEqual(calledModels, [primaryModel, fallbackModel]);
 });
+
+test("extracts selectedEventCandidateId from fallback parsing path", async () => {
+  const result = await parseIntentFromText({
+    text: "I choose this event: Tomorrowland 2026. Candidate ID: ticketmaster:tm-1. From Sofia for 2 travelers with max budget 1200 per person.",
+    model: {} as never,
+    generateObjectFn: (() => {
+      throw new Error("parse failure");
+    }) as never,
+  });
+
+  assert.equal(result.intent.event?.includes("Tomorrowland"), true);
+  assert.equal(result.intent.originCity, "Sofia");
+  assert.equal(result.intent.travelers, 2);
+  assert.equal(result.intent.maxBudgetPerPerson, 1200);
+  assert.equal(result.intent.selectedEventCandidateId, "ticketmaster:tm-1");
+});
+
+test("enriches selectedEventCandidateId from raw text when model omits it", async () => {
+  const result = await parseIntentFromText({
+    text: "Tomorrowland from Sofia for 2 travelers with max budget 1200. Candidate ID: ticketmaster:tm-42.",
+    model: {} as never,
+    generateObjectFn: (async () => ({
+      object: {
+        event: "Tomorrowland",
+        originCity: "Sofia",
+        travelers: 2,
+        maxBudgetPerPerson: 1200,
+      },
+    })) as never,
+  });
+
+  assert.equal(result.intent.selectedEventCandidateId, "ticketmaster:tm-42");
+});

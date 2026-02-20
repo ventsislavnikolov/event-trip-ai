@@ -9,6 +9,7 @@ test("validateEventTripIntent accepts valid values and normalizes strings", () =
     originCity: " Sofia ",
     travelers: "2",
     maxBudgetPerPerson: "1200 EUR",
+    selectedEventCandidateId: " ticketmaster:tm-1 ",
   });
 
   assert.equal(result.success, true);
@@ -22,6 +23,7 @@ test("validateEventTripIntent accepts valid values and normalizes strings", () =
     originCity: "Sofia",
     travelers: 2,
     maxBudgetPerPerson: 1200,
+    selectedEventCandidateId: "ticketmaster:tm-1",
   });
 });
 
@@ -31,6 +33,7 @@ test("validateEventTripIntent rejects unknown fields under strict schema", () =>
     originCity: "Sofia",
     travelers: 2,
     maxBudgetPerPerson: 1200,
+    selectedEventCandidateId: "ticketmaster:tm-1",
     currency: "EUR",
   });
 

@@ -22,6 +22,7 @@ import { useAutoResume } from "@/hooks/use-auto-resume";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import type { Vote } from "@/lib/db/schema";
 import { ChatSDKError } from "@/lib/errors";
+import { buildEventCandidateSelectionPrompt } from "@/lib/eventtrip/disambiguation-selection";
 import { injectPersistedEventTripPackagesMessage } from "@/lib/eventtrip/persistence/hydrate-messages";
 import type { Attachment, ChatMessage, CustomUIDataTypes } from "@/lib/types";
 import { fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
@@ -176,6 +177,9 @@ export function Chat({
     fetcher
   );
   const { data: persistedEventTrip } = useSWR<{
+    originCity: string;
+    travelers: number;
+    maxBudgetPerPerson: number | null;
     packages: CustomUIDataTypes["eventtripPackages"];
   } | null>(messages.length > 0 ? `/api/chat/${id}/eventtrip` : null, fetcher);
 
@@ -218,6 +222,25 @@ export function Chat({
           isArtifactVisible={isArtifactVisible}
           isReadonly={isReadonly}
           messages={messages}
+          onSelectEventCandidate={(candidate) => {
+            if (isReadonly) {
+              return;
+            }
+
+            sendMessage({
+              role: "user",
+              parts: [
+                {
+                  type: "text",
+                  text: buildEventCandidateSelectionPrompt(candidate, {
+                    originCity: persistedEventTrip?.originCity,
+                    travelers: persistedEventTrip?.travelers,
+                    maxBudgetPerPerson: persistedEventTrip?.maxBudgetPerPerson,
+                  }),
+                },
+              ],
+            });
+          }}
           regenerate={regenerate}
           selectedModelId={initialChatModel}
           setMessages={setMessages}

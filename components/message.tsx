@@ -16,7 +16,10 @@ import {
   ToolInput,
   ToolOutput,
 } from "./elements/tool";
-import { DisambiguationPicker } from "./eventtrip/disambiguation-picker";
+import {
+  DisambiguationPicker,
+  type EventCandidate,
+} from "./eventtrip/disambiguation-picker";
 import { PackageCards } from "./eventtrip/package-cards";
 import { SparklesIcon } from "./icons";
 import { MessageActions } from "./message-actions";
@@ -33,6 +36,7 @@ const PurePreviewMessage = ({
   isLoading,
   setMessages,
   regenerate,
+  onSelectEventCandidate,
   isReadonly,
   requiresScrollPadding: _requiresScrollPadding,
 }: {
@@ -43,6 +47,7 @@ const PurePreviewMessage = ({
   isLoading: boolean;
   setMessages: UseChatHelpers<ChatMessage>["setMessages"];
   regenerate: UseChatHelpers<ChatMessage>["regenerate"];
+  onSelectEventCandidate?: (candidate: EventCandidate) => void;
   isReadonly: boolean;
   requiresScrollPadding: boolean;
 }) => {
@@ -377,9 +382,7 @@ const PurePreviewMessage = ({
                 <DisambiguationPicker
                   candidates={candidatesPart.data}
                   key={key}
-                  onSelect={() => {
-                    // Selection handling will be wired in follow-up issue.
-                  }}
+                  onSelect={onSelectEventCandidate ?? (() => undefined)}
                 />
               );
             }

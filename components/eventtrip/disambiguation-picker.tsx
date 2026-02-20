@@ -1,6 +1,6 @@
 "use client";
 
-type EventCandidate = {
+export type EventCandidate = {
   id: string;
   name: string;
   location?: string;
@@ -9,7 +9,7 @@ type EventCandidate = {
 
 type DisambiguationPickerProps = {
   candidates: EventCandidate[];
-  onSelect: (candidateId: string) => void;
+  onSelect: (candidate: EventCandidate) => void;
 };
 
 export function DisambiguationPicker({
@@ -29,7 +29,7 @@ export function DisambiguationPicker({
           <li key={candidate.id}>
             <button
               className="flex w-full items-center justify-between rounded-md border px-3 py-2 text-left text-sm hover:bg-muted"
-              onClick={() => onSelect(candidate.id)}
+              onClick={() => onSelect(candidate)}
               type="button"
             >
               <span className="font-medium">{candidate.name}</span>

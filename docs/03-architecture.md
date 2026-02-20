@@ -14,6 +14,8 @@ Live in `main`:
 - `et_events` linkage for persisted trips when provider event metadata includes a usable start time.
 - Normalized event candidates streamed to UI (`data-eventtripCandidates`) from provider search results.
 - Travel provider retry fallback that re-queries with selected event city when the raw event query returns no flight options.
+- Disambiguation picker selection now feeds a concrete follow-up user prompt back into chat flow.
+- Intent parsing supports `selectedEventCandidateId`, allowing explicit candidate selection to drive deterministic event choice.
 
 Not yet wired in runtime:
 - Curated event index integration and robust event resolution across multiple provider candidates.

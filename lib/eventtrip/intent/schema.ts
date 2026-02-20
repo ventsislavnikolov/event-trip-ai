@@ -42,6 +42,7 @@ export const eventTripIntentExtractionSchema = z
     originCity: optionalStringField,
     travelers: optionalTravelersField,
     maxBudgetPerPerson: optionalBudgetField,
+    selectedEventCandidateId: optionalStringField,
   })
   .strict();
 
