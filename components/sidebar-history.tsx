@@ -24,26 +24,31 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import type { Chat } from "@/lib/db/schema";
+import type { EventTripHistorySummary } from "@/lib/eventtrip/persistence/history-summary";
 import { fetcher } from "@/lib/utils";
 import { LoaderIcon } from "./icons";
 import { ChatItem } from "./sidebar-history-item";
 
+export type ChatHistoryItem = Chat & {
+  eventTripSummary?: EventTripHistorySummary;
+};
+
 type GroupedChats = {
-  today: Chat[];
-  yesterday: Chat[];
-  lastWeek: Chat[];
-  lastMonth: Chat[];
-  older: Chat[];
+  today: ChatHistoryItem[];
+  yesterday: ChatHistoryItem[];
+  lastWeek: ChatHistoryItem[];
+  lastMonth: ChatHistoryItem[];
+  older: ChatHistoryItem[];
 };
 
 export type ChatHistory = {
-  chats: Chat[];
+  chats: ChatHistoryItem[];
   hasMore: boolean;
 };
 
 const PAGE_SIZE = 20;
 
-const groupChatsByDate = (chats: Chat[]): GroupedChats => {
+const groupChatsByDate = (chats: ChatHistoryItem[]): GroupedChats => {
   const now = new Date();
   const oneWeekAgo = subWeeks(now, 1);
   const oneMonthAgo = subMonths(now, 1);

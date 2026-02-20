@@ -29,6 +29,7 @@ pnpm exec tsx --test \
   tests/db/connection.test.ts \
   tests/intent/parse-intent.test.ts \
   tests/intent/chat-intent-gate.test.ts \
+  tests/eventtrip/history-summary.test.ts \
   tests/eventtrip/hydrate-messages.test.ts \
   tests/packages/ranking.test.ts \
   tests/providers/airport-code-resolver.test.ts \

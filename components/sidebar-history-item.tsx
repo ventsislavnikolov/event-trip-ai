@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { memo } from "react";
+import type { ChatHistoryItem } from "@/components/sidebar-history";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
-import type { Chat } from "@/lib/db/schema";
+import { formatEventTripHistorySummary } from "@/lib/eventtrip/persistence/history-summary";
 import {
   CheckCircleFillIcon,
   GlobeIcon,
@@ -32,7 +33,7 @@ const PureChatItem = ({
   onDelete,
   setOpenMobile,
 }: {
-  chat: Chat;
+  chat: ChatHistoryItem;
   isActive: boolean;
   onDelete: (chatId: string) => void;
   setOpenMobile: (open: boolean) => void;
@@ -46,7 +47,14 @@ const PureChatItem = ({
     <SidebarMenuItem>
       <SidebarMenuButton asChild isActive={isActive}>
         <Link href={`/chat/${chat.id}`} onClick={() => setOpenMobile(false)}>
-          <span>{chat.title}</span>
+          <div className="flex min-w-0 flex-col">
+            <span className="truncate">{chat.title}</span>
+            {chat.eventTripSummary ? (
+              <span className="truncate text-sidebar-foreground/55 text-xs">
+                {formatEventTripHistorySummary(chat.eventTripSummary)}
+              </span>
+            ) : null}
+          </div>
         </Link>
       </SidebarMenuButton>
 

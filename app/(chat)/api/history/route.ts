@@ -1,8 +1,13 @@
 import type { NextRequest } from "next/server";
 import { auth } from "@/app/(auth)/auth";
 import { createApiSuccessResponse } from "@/lib/api/contracts";
-import { deleteAllChatsByUserId, getChatsByUserId } from "@/lib/db/queries";
+import {
+  deleteAllChatsByUserId,
+  getChatsByUserId,
+  getLatestEventTripResultByChatId,
+} from "@/lib/db/queries";
 import { ChatSDKError } from "@/lib/errors";
+import type { EventTripHistorySummary } from "@/lib/eventtrip/persistence/history-summary";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
@@ -31,7 +36,42 @@ export async function GET(request: NextRequest) {
     endingBefore,
   });
 
-  return createApiSuccessResponse(chats);
+  const chatsWithEventTripSummary = await Promise.all(
+    chats.chats.map(async (chat) => {
+      const latestEventTrip = await getLatestEventTripResultByChatId({
+        chatId: chat.id,
+      });
+
+      if (!latestEventTrip) {
+        return chat;
+      }
+
+      const summary: EventTripHistorySummary = {
+        eventQuery: latestEventTrip.eventQuery,
+        originCity: latestEventTrip.originCity,
+        travelers: latestEventTrip.travelers,
+        maxBudgetPerPerson: latestEventTrip.maxBudgetPerPerson,
+        event: latestEventTrip.event
+          ? {
+              name: latestEventTrip.event.name,
+              city: latestEventTrip.event.city,
+              country: latestEventTrip.event.country,
+              startsAt: latestEventTrip.event.startsAt,
+            }
+          : null,
+      };
+
+      return {
+        ...chat,
+        eventTripSummary: summary,
+      };
+    })
+  );
+
+  return createApiSuccessResponse({
+    ...chats,
+    chats: chatsWithEventTripSummary,
+  });
 }
 
 export async function DELETE() {
