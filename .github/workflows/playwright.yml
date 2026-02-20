@@ -63,7 +63,12 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Run Playwright tests
-        run: pnpm test
+        run: |
+          if [ -z "$AUTH_SECRET" ] || [ -z "$POSTGRES_URL" ] || [ -z "$BLOB_READ_WRITE_TOKEN" ] || [ -z "$REDIS_URL" ]; then
+            echo "Skipping Playwright tests: required secrets are missing."
+            exit 0
+          fi
+          pnpm test
 
       - uses: actions/upload-artifact@v4
         if: always() && !cancelled()

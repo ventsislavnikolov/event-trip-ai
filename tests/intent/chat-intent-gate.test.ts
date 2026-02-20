@@ -64,7 +64,9 @@ test("buildIntentGateResult retries with fallback model when primary parse fails
       ],
     },
     model: primaryModel,
+    modelId: "google/gemini-2.5-flash-lite",
     fallbackModel,
+    fallbackModelId: "openai/gpt-4.1-mini",
     generateObjectFn: (({ model }: { model: unknown }) => {
       calledModels.push(model);
 
@@ -86,4 +88,37 @@ test("buildIntentGateResult retries with fallback model when primary parse fails
   assert.equal(result.shouldInterrupt, false);
   assert.equal(result.followUpQuestion, null);
   assert.deepEqual(calledModels, [primaryModel, fallbackModel]);
+});
+
+test("buildIntentGateResult routes openai model ids through the OpenAI adapter", async () => {
+  let capturedPrompt = "";
+
+  const result = await buildIntentGateResult({
+    message: {
+      role: "user",
+      parts: [
+        {
+          type: "text",
+          text: "Tomorrowland from Sofia for 2 travelers max budget 1200",
+        },
+      ],
+    },
+    model: {} as never,
+    modelId: "openai/gpt-4.1-mini",
+    generateObjectFn: (({ prompt }: { prompt: string }) => {
+      capturedPrompt = prompt;
+      return Promise.resolve({
+        object: {
+          event: "Tomorrowland",
+          originCity: "Sofia",
+          travelers: 2,
+          maxBudgetPerPerson: 1200,
+        },
+      });
+    }) as never,
+  });
+
+  assert.equal(result.shouldInterrupt, false);
+  assert.equal(result.followUpQuestion, null);
+  assert.match(capturedPrompt, /OpenAI parseIntent adapter/i);
 });

@@ -15,21 +15,21 @@ export type TravelPayoutsHotelOption = {
   currency: string;
 };
 
-export async function fetchTravelPayoutsFlights(_params: {
+export function fetchTravelPayoutsFlights(_params: {
   originCity: string;
   destinationCity: string;
   departDate: string;
   returnDate: string;
 }): Promise<TravelPayoutsFlightOption[]> {
   // Implementation will be connected to TravelPayouts API in a dedicated issue.
-  return [];
+  return Promise.resolve([]);
 }
 
-export async function fetchTravelPayoutsHotels(_params: {
+export function fetchTravelPayoutsHotels(_params: {
   destinationCity: string;
   checkInDate: string;
   checkOutDate: string;
 }): Promise<TravelPayoutsHotelOption[]> {
   // Implementation will be connected to TravelPayouts API in a dedicated issue.
-  return [];
+  return Promise.resolve([]);
 }

@@ -4,8 +4,6 @@ import { useState } from "react";
 import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
 import { cn, sanitizeText } from "@/lib/utils";
-import { DisambiguationPicker } from "./eventtrip/disambiguation-picker";
-import { PackageCards } from "./eventtrip/package-cards";
 import { useDataStream } from "./data-stream-provider";
 import { DocumentToolResult } from "./document";
 import { DocumentPreview } from "./document-preview";
@@ -18,6 +16,8 @@ import {
   ToolInput,
   ToolOutput,
 } from "./elements/tool";
+import { DisambiguationPicker } from "./eventtrip/disambiguation-picker";
+import { PackageCards } from "./eventtrip/package-cards";
 import { SparklesIcon } from "./icons";
 import { MessageActions } from "./message-actions";
 import { MessageEditor } from "./message-editor";
@@ -350,7 +350,10 @@ const PurePreviewMessage = ({
                 data: Parameters<typeof PackageCards>[0]["packages"];
               };
 
-              if (!Array.isArray(packagePart.data) || packagePart.data.length === 0) {
+              if (
+                !Array.isArray(packagePart.data) ||
+                packagePart.data.length === 0
+              ) {
                 return null;
               }
 

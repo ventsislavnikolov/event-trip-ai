@@ -1,8 +1,8 @@
 import {
-  rankPackageOptions,
   type PackageOptionInput,
   type RankedPackageOption,
   type RankedPackageResult,
+  rankPackageOptions,
 } from "./ranking";
 
 type BuildPackagesInput = {
@@ -58,9 +58,7 @@ export function buildFallbackPackageOptions({
   }));
 }
 
-export function toPackageCards(
-  tiers: RankedPackageOption[]
-): {
+export function toPackageCards(tiers: RankedPackageOption[]): {
   id: string;
   tier: RankedPackageOption["tier"];
   currency: string;

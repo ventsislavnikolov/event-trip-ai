@@ -1,5 +1,10 @@
 import { generateObject, type LanguageModel } from "ai";
 import {
+  isOpenAIIntentModel,
+  parseIntentWithOpenAIAdapter,
+} from "./adapters/openai";
+import type { GenerateObjectLike } from "./adapters/types";
+import {
   type EventTripIntent,
   eventTripIntentExtractionSchema,
   getFollowUpQuestion,
@@ -8,19 +13,13 @@ import {
   validateEventTripIntent,
 } from "./schema";
 
-type GenerateObjectLike = (options: {
-  model: LanguageModel;
-  schema: typeof eventTripIntentExtractionSchema;
-  prompt: string;
-}) => Promise<{ object: unknown }>;
-
 async function defaultGenerateObject(options: {
   model: LanguageModel;
   schema: typeof eventTripIntentExtractionSchema;
   prompt: string;
-}): Promise<{ object: unknown }> {
+}): Promise<{ object: EventTripIntent }> {
   const result = await generateObject(options);
-  return { object: result.object };
+  return { object: result.object as EventTripIntent };
 }
 
 function extractIntentWithFallback(text: string): EventTripIntent {
@@ -72,12 +71,16 @@ function buildIntentExtractionPrompt(text: string): string {
 export async function parseIntentFromText({
   text,
   model,
+  modelId,
   fallbackModel,
+  fallbackModelId,
   generateObjectFn = defaultGenerateObject,
 }: {
   text: string;
   model: LanguageModel;
+  modelId?: string;
   fallbackModel?: LanguageModel;
+  fallbackModelId?: string;
   generateObjectFn?: GenerateObjectLike;
 }): Promise<ParsedIntentResult> {
   const normalizedText = text.trim();
@@ -94,8 +97,17 @@ export async function parseIntentFromText({
   }
 
   async function parseWithModel(
-    activeModel: LanguageModel
+    activeModel: LanguageModel,
+    activeModelId?: string
   ): Promise<EventTripIntent> {
+    if (isOpenAIIntentModel(activeModelId)) {
+      return parseIntentWithOpenAIAdapter({
+        text: normalizedText,
+        model: activeModel,
+        generateObjectFn,
+      });
+    }
+
     const { object } = await generateObjectFn({
       model: activeModel,
       schema: eventTripIntentExtractionSchema,
@@ -114,11 +126,11 @@ export async function parseIntentFromText({
   let parsedIntent: EventTripIntent;
 
   try {
-    parsedIntent = await parseWithModel(model);
+    parsedIntent = await parseWithModel(model, modelId);
   } catch (_primaryError) {
     if (fallbackModel) {
       try {
-        parsedIntent = await parseWithModel(fallbackModel);
+        parsedIntent = await parseWithModel(fallbackModel, fallbackModelId);
       } catch (_fallbackError) {
         parsedIntent = extractIntentWithFallback(normalizedText);
       }

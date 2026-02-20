@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { auth } from "@/app/(auth)/auth";
+import { createApiSuccessResponse } from "@/lib/api/contracts";
 import { deleteAllChatsByUserId, getChatsByUserId } from "@/lib/db/queries";
 import { ChatSDKError } from "@/lib/errors";
 
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest) {
     endingBefore,
   });
 
-  return Response.json(chats);
+  return createApiSuccessResponse(chats);
 }
 
 export async function DELETE() {
@@ -42,5 +43,5 @@ export async function DELETE() {
 
   const result = await deleteAllChatsByUserId({ userId: session.user.id });
 
-  return Response.json(result, { status: 200 });
+  return createApiSuccessResponse(result, { status: 200 });
 }

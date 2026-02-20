@@ -42,6 +42,53 @@ test("returns targeted follow-up when budget is missing", async () => {
   assert.match(result.followUpQuestion ?? "", /max budget per person/i);
 });
 
+test("uses OpenAI adapter prompt for openai model ids", async () => {
+  let usedPrompt = "";
+
+  await parseIntentFromText({
+    text: "Tomorrowland from Sofia for 2 travelers with max budget 1200",
+    model: {} as never,
+    modelId: "openai/gpt-4.1-mini",
+    generateObjectFn: (({ prompt }: { prompt: string }) => {
+      usedPrompt = prompt;
+      return Promise.resolve({
+        object: {
+          event: "Tomorrowland",
+          originCity: "Sofia",
+          travelers: 2,
+          maxBudgetPerPerson: 1200,
+        },
+      });
+    }) as never,
+  });
+
+  assert.match(usedPrompt, /OpenAI parseIntent adapter/i);
+});
+
+test("uses default prompt for non-openai model ids", async () => {
+  let usedPrompt = "";
+
+  await parseIntentFromText({
+    text: "Tomorrowland from Sofia for 2 travelers with max budget 1200",
+    model: {} as never,
+    modelId: "google/gemini-2.5-flash-lite",
+    generateObjectFn: (({ prompt }: { prompt: string }) => {
+      usedPrompt = prompt;
+      return Promise.resolve({
+        object: {
+          event: "Tomorrowland",
+          originCity: "Sofia",
+          travelers: 2,
+          maxBudgetPerPerson: 1200,
+        },
+      });
+    }) as never,
+  });
+
+  assert.match(usedPrompt, /Extract EventTrip intent fields/i);
+  assert.doesNotMatch(usedPrompt, /OpenAI parseIntent adapter/i);
+});
+
 test("uses fallback model when primary model returns invalid strict-schema payload", async () => {
   const primaryModel = { id: "primary" } as never;
   const fallbackModel = { id: "fallback" } as never;

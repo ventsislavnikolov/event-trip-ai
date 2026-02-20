@@ -1,4 +1,5 @@
 import { auth } from "@/app/(auth)/auth";
+import { createApiSuccessResponse } from "@/lib/api/contracts";
 import { getChatById, getVotesByChatId, voteMessage } from "@/lib/db/queries";
 import { ChatSDKError } from "@/lib/errors";
 
@@ -31,7 +32,7 @@ export async function GET(request: Request) {
 
   const votes = await getVotesByChatId({ id: chatId });
 
-  return Response.json(votes, { status: 200 });
+  return createApiSuccessResponse(votes, { status: 200 });
 }
 
 export async function PATCH(request: Request) {
@@ -71,5 +72,12 @@ export async function PATCH(request: Request) {
     type,
   });
 
-  return new Response("Message voted", { status: 200 });
+  return createApiSuccessResponse(
+    {
+      chatId,
+      messageId,
+      type,
+    },
+    { status: 200 }
+  );
 }
