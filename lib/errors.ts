@@ -1,3 +1,5 @@
+import type { ApiErrorEnvelope } from "./api/contracts";
+
 export type ErrorType =
   | "bad_request"
   | "unauthorized"
@@ -57,21 +59,36 @@ export class ChatSDKError extends Error {
     const visibility = visibilityBySurface[this.surface];
 
     const { message, cause, statusCode } = this;
+    const causeMessage = typeof cause === "string" ? cause : undefined;
 
     if (visibility === "log") {
       console.error({
         code,
         message,
-        cause,
+        cause: causeMessage,
       });
 
-      return Response.json(
-        { code: "", message: "Something went wrong. Please try again later." },
-        { status: statusCode }
-      );
+      const payload: ApiErrorEnvelope = {
+        ok: false,
+        error: {
+          code: "",
+          message: "Something went wrong. Please try again later.",
+        },
+      };
+
+      return Response.json(payload, { status: statusCode });
     }
 
-    return Response.json({ code, message, cause }, { status: statusCode });
+    const payload: ApiErrorEnvelope = {
+      ok: false,
+      error: {
+        code,
+        message,
+        ...(causeMessage ? { cause: causeMessage } : {}),
+      },
+    };
+
+    return Response.json(payload, { status: statusCode });
   }
 }
 

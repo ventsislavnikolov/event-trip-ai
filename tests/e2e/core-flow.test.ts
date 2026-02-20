@@ -51,7 +51,13 @@ test.describe("Core Flow Smoke", () => {
       await route.fulfill({
         status: 500,
         contentType: "application/json",
-        body: JSON.stringify({ error: "Provider timeout" }),
+        body: JSON.stringify({
+          ok: false,
+          error: {
+            code: "offline:chat",
+            message: "Provider timeout",
+          },
+        }),
       });
     });
 

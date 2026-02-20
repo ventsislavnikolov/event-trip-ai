@@ -60,7 +60,13 @@ test.describe("Chat Error Handling", () => {
       await route.fulfill({
         status: 500,
         contentType: "application/json",
-        body: JSON.stringify({ error: "Internal server error" }),
+        body: JSON.stringify({
+          ok: false,
+          error: {
+            code: "offline:chat",
+            message: "Internal server error",
+          },
+        }),
       });
     });
 
