@@ -24,7 +24,8 @@ function formatProviderFailureSummary(
   return Object.entries(failures)
     .filter(([, failure]) => failure !== null)
     .map(([providerName, failure]) => {
-      const providerLabel = providerName[0].toUpperCase() + providerName.slice(1);
+      const providerLabel =
+        providerName[0].toUpperCase() + providerName.slice(1);
       return `${providerLabel}: ${failure?.kind} (${failure?.message})`;
     });
 }
@@ -58,7 +59,7 @@ export async function runEventTripPipeline({
   const { departDate, returnDate } = getTravelDates();
 
   const providerResponse = await collectProviderData({
-    timeoutMs: 2_000,
+    timeoutMs: 2000,
     retries: 1,
     providers: {
       ticketmaster: async () => fetchTicketmasterEvents(destinationCity),
@@ -92,6 +93,8 @@ export async function runEventTripPipeline({
   return {
     packages: toPackageCards(ranked.tiers),
     degraded: providerResponse.degraded,
-    providerFailureSummary: formatProviderFailureSummary(providerResponse.failures),
+    providerFailureSummary: formatProviderFailureSummary(
+      providerResponse.failures
+    ),
   };
 }
