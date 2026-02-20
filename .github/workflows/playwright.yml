@@ -9,6 +9,7 @@ jobs:
   test:
     timeout-minutes: 30
     runs-on: ubuntu-latest
+    if: ${{ secrets.AUTH_SECRET != '' && secrets.POSTGRES_URL != '' && secrets.BLOB_READ_WRITE_TOKEN != '' && secrets.REDIS_URL != '' }}
     env:
       AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
       POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
