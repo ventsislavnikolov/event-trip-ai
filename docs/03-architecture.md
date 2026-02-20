@@ -19,6 +19,7 @@ Live in `main`:
 - Travelpayouts flight lookups now include bootstrap city-to-airport normalization for common city-name inputs.
 - Linked `et_events` metadata now hydrates and renders a selected-event summary in chat surfaces.
 - Airport-code normalization is now centralized in a dedicated resolver module with alias and suffix-aware matching.
+- Event selection now uses deterministic name-match scoring across provider candidates when explicit selection is not provided.
 
 Not yet wired in runtime:
 - Curated event index integration and robust event resolution across multiple provider candidates.

@@ -291,3 +291,85 @@ test("runEventTripPipeline prefers explicit selectedEventCandidateId", async () 
   assert.equal(result.selectedEvent?.providerEventId, "sg-9");
   assert.equal(result.selectedEvent?.city, "Antwerp");
 });
+
+test("runEventTripPipeline picks best event name match across providers", async () => {
+  const result = await runEventTripPipeline({
+    intent: {
+      event: "Tomorrowland",
+      originCity: "SOF",
+      travelers: 1,
+      maxBudgetPerPerson: 1200,
+    },
+    providers: {
+      ticketmaster: async () => [
+        {
+          id: "tm-1",
+          name: "Electronic Music Showcase",
+          city: "Boom",
+          country: "BE",
+          startsAt: "2026-07-20T18:00:00.000Z",
+        },
+      ],
+      seatgeek: async () => [
+        {
+          id: "sg-1",
+          title: "Tomorrowland 2026",
+          city: "Antwerp",
+          country: "BE",
+          startsAt: "2026-07-20T18:00:00.000Z",
+        },
+      ],
+      travelpayouts: async () => ({
+        flights: [
+          {
+            id: "f-1",
+            origin: "SOF",
+            destination: "BRU",
+            price: 140,
+            currency: "EUR",
+          },
+          {
+            id: "f-2",
+            origin: "SOF",
+            destination: "BRU",
+            price: 220,
+            currency: "EUR",
+          },
+          {
+            id: "f-3",
+            origin: "SOF",
+            destination: "BRU",
+            price: 330,
+            currency: "EUR",
+          },
+        ],
+        hotels: [
+          {
+            id: "h-1",
+            name: "Stay 1",
+            city: "Antwerp",
+            pricePerNight: 160,
+            currency: "EUR",
+          },
+          {
+            id: "h-2",
+            name: "Stay 2",
+            city: "Antwerp",
+            pricePerNight: 230,
+            currency: "EUR",
+          },
+          {
+            id: "h-3",
+            name: "Stay 3",
+            city: "Antwerp",
+            pricePerNight: 340,
+            currency: "EUR",
+          },
+        ],
+      }),
+    },
+  });
+
+  assert.equal(result.selectedEvent?.provider, "seatgeek");
+  assert.equal(result.selectedEvent?.providerEventId, "sg-1");
+});

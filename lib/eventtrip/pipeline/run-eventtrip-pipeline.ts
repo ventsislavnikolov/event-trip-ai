@@ -89,13 +89,65 @@ function getTravelDates(): { departDate: string; returnDate: string } {
   };
 }
 
+function normalizeEventText(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function tokenizeEventText(value: string): string[] {
+  return normalizeEventText(value)
+    .split(" ")
+    .map((token) => token.trim())
+    .filter((token) => token.length >= 3);
+}
+
+function scoreEventNameMatch({
+  query,
+  candidateName,
+}: {
+  query: string;
+  candidateName: string;
+}): number {
+  const normalizedQuery = normalizeEventText(query);
+  const normalizedCandidate = normalizeEventText(candidateName);
+
+  if (!normalizedQuery || !normalizedCandidate) {
+    return 0;
+  }
+
+  if (normalizedCandidate.includes(normalizedQuery)) {
+    return 100;
+  }
+
+  const queryTokens = tokenizeEventText(normalizedQuery);
+  if (queryTokens.length === 0) {
+    return 0;
+  }
+
+  const candidateTokens = new Set(tokenizeEventText(normalizedCandidate));
+  let overlapCount = 0;
+
+  for (const token of queryTokens) {
+    if (candidateTokens.has(token)) {
+      overlapCount += 1;
+    }
+  }
+
+  return overlapCount * 10;
+}
+
 function selectPreferredEventCandidate({
   ticketmasterEvents,
   seatGeekEvents,
+  eventQuery,
   selectedEventCandidateId,
 }: {
   ticketmasterEvents: TicketmasterEvent[];
   seatGeekEvents: SeatGeekEvent[];
+  eventQuery: string;
   selectedEventCandidateId?: string;
 }): EventTripPipelineResult["selectedEvent"] {
   const normalizedSelectedCandidateId =
@@ -143,9 +195,12 @@ function selectPreferredEventCandidate({
     }
   }
 
-  const ticketmasterEvent = ticketmasterEvents[0];
-  if (ticketmasterEvent) {
-    return {
+  const scoredCandidates: Array<
+    EventTripPipelineResult["selectedEvent"] & { score: number }
+  > = [];
+
+  for (const ticketmasterEvent of ticketmasterEvents) {
+    scoredCandidates.push({
       provider: "ticketmaster",
       providerEventId: ticketmasterEvent.id,
       name: ticketmasterEvent.name,
@@ -154,7 +209,36 @@ function selectPreferredEventCandidate({
       venue: ticketmasterEvent.venue,
       startsAt: ticketmasterEvent.startsAt,
       endsAt: ticketmasterEvent.endsAt,
-    };
+      score: scoreEventNameMatch({
+        query: eventQuery,
+        candidateName: ticketmasterEvent.name,
+      }),
+    });
+  }
+
+  for (const seatGeekEvent of seatGeekEvents) {
+    scoredCandidates.push({
+      provider: "seatgeek",
+      providerEventId: seatGeekEvent.id,
+      name: seatGeekEvent.title,
+      city: seatGeekEvent.city,
+      country: seatGeekEvent.country,
+      venue: seatGeekEvent.venue,
+      startsAt: seatGeekEvent.startsAt,
+      endsAt: seatGeekEvent.endsAt,
+      score: scoreEventNameMatch({
+        query: eventQuery,
+        candidateName: seatGeekEvent.title,
+      }),
+    });
+  }
+
+  const bestScoredCandidate = scoredCandidates
+    .sort((left, right) => right.score - left.score)
+    .at(0);
+  if (bestScoredCandidate) {
+    const { score: _score, ...selectedCandidate } = bestScoredCandidate;
+    return selectedCandidate;
   }
 
   const seatGeekEvent = seatGeekEvents[0];
@@ -315,6 +399,7 @@ export async function runEventTripPipeline({
   const selectedEvent = selectPreferredEventCandidate({
     ticketmasterEvents: providerResponse.results.ticketmaster ?? [],
     seatGeekEvents: providerResponse.results.seatgeek ?? [],
+    eventQuery: destinationCity,
     selectedEventCandidateId: intent.selectedEventCandidateId,
   });
 
