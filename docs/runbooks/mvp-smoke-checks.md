@@ -29,11 +29,13 @@ pnpm exec tsx --test \
   tests/db/connection.test.ts \
   tests/intent/parse-intent.test.ts \
   tests/intent/chat-intent-gate.test.ts \
+  tests/eventtrip/hydrate-messages.test.ts \
   tests/packages/ranking.test.ts \
   tests/providers/provider-adapters.test.ts \
   tests/providers/collector.test.ts \
   tests/ui/package-cards.test.tsx \
-  tests/ui/disambiguation-picker.test.tsx
+  tests/ui/disambiguation-picker.test.tsx \
+  tests/ui/selected-event-summary.test.tsx
 ```
 4. Run production build check:
 ```bash
