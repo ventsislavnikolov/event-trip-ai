@@ -43,6 +43,11 @@ pnpm exec tsx --test \
 ```bash
 pnpm build
 ```
+5. Run EventTrip P95 latency benchmark gate:
+```bash
+pnpm perf:eventtrip:p95
+```
+Expected: JSON output with `p95Ms` less than `targetMs` (default `30000`).
 
 ## Core Flow E2E Smoke
 

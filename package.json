@@ -15,6 +15,7 @@
     "db:pull": "drizzle-kit pull",
     "db:check": "drizzle-kit check",
     "db:up": "drizzle-kit up",
+    "perf:eventtrip:p95": "tsx scripts/perf/eventtrip-p95.ts",
     "env:check": "node scripts/check-required-env.mjs",
     "env:check:local": "node scripts/check-required-env.mjs local",
     "env:check:preview": "node scripts/check-required-env.mjs vercel-preview",

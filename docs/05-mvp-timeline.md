@@ -31,7 +31,7 @@
 - [x] Production smoke checks and rollback notes
 - [x] SEO metadata and sharing previews
 - [x] Funnel analytics events
-- [ ] Performance pass (P95 within target budget)
+- [x] Performance pass (P95 within target budget)
 - [ ] Preview and production deployment verification
 
 ### Week 7: Launch Week
