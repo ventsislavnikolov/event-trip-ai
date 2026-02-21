@@ -24,7 +24,7 @@
 - [x] Package result cards with line-item pricing
 - [x] Outbound booking link tracking
 - [x] Observability logs for parse, provider latency, and package generation
-- [ ] Request deadline and graceful fallback states
+- [x] Request deadline and graceful fallback states
 
 ### Week 6: Hardening and Launch Readiness
 - [x] Regression suite for core prompt-to-package flow

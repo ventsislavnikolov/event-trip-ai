@@ -30,6 +30,16 @@ import {
 import type { DBMessage } from "@/lib/db/schema";
 import { ChatSDKError } from "@/lib/errors";
 import { resolveIntentModelIds } from "@/lib/eventtrip/intent/model-routing";
+import type { EventTripIntent } from "@/lib/eventtrip/intent/schema";
+import {
+  buildFallbackPackageOptions,
+  buildPackages,
+  toPackageCards,
+} from "@/lib/eventtrip/packages/build-packages";
+import {
+  DeadlineExceededError,
+  runWithDeadline,
+} from "@/lib/eventtrip/pipeline/deadline";
 import { runEventTripPipeline } from "@/lib/eventtrip/pipeline/run-eventtrip-pipeline";
 import type { ChatMessage } from "@/lib/types";
 import { convertToUIMessages, generateUUID } from "@/lib/utils";
@@ -38,6 +48,42 @@ import { buildIntentGateResult } from "./intent";
 import { type PostRequestBody, postRequestBodySchema } from "./schema";
 
 export const maxDuration = 60;
+const EVENTTRIP_PIPELINE_DEADLINE_MS = 15_000;
+
+type EventTripPipelineResult = Awaited<ReturnType<typeof runEventTripPipeline>>;
+
+function buildGracefulFallbackPipelineResult({
+  intent,
+  reason,
+  elapsedMs,
+}: {
+  intent: EventTripIntent;
+  reason: string;
+  elapsedMs: number;
+}): EventTripPipelineResult {
+  const travelers = intent.travelers ?? 1;
+  const ranked = buildPackages({
+    options: buildFallbackPackageOptions({ travelers }),
+    maxBudgetPerPerson: intent.maxBudgetPerPerson,
+  });
+
+  return {
+    packages: toPackageCards(ranked.tiers),
+    degraded: true,
+    providerFailureSummary: [reason],
+    observability: {
+      totalDurationMs: elapsedMs,
+      packageGenerationDurationMs: 0,
+      providerLatencyMs: {
+        ticketmaster: 0,
+        seatgeek: 0,
+        travelpayouts: 0,
+      },
+    },
+    candidates: [],
+    selectedEvent: null,
+  };
+}
 
 function logEventTripObservability(
   event: string,
@@ -215,10 +261,30 @@ export async function POST(request: Request) {
 
       if (intentGateResult.intent) {
         const resolvedIntent = intentGateResult.intent;
+        const pipelineStartedAt = Date.now();
+        let pipelineResult: EventTripPipelineResult;
 
-        const pipelineResult = await runEventTripPipeline({
-          intent: resolvedIntent,
-        });
+        try {
+          pipelineResult = await runWithDeadline(
+            () =>
+              runEventTripPipeline({
+                intent: resolvedIntent,
+              }),
+            EVENTTRIP_PIPELINE_DEADLINE_MS
+          );
+        } catch (error) {
+          const elapsedMs = Date.now() - pipelineStartedAt;
+          const reason =
+            error instanceof DeadlineExceededError
+              ? `Request deadline exceeded (${EVENTTRIP_PIPELINE_DEADLINE_MS}ms)`
+              : "EventTrip pipeline error";
+
+          pipelineResult = buildGracefulFallbackPipelineResult({
+            intent: resolvedIntent,
+            reason,
+            elapsedMs,
+          });
+        }
 
         logEventTripObservability("pipeline", {
           chatId: id,
