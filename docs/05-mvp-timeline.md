@@ -22,7 +22,7 @@
 - [ ] Smart prompt UI and conversation state model
 - [x] Event disambiguation picker UI
 - [x] Package result cards with line-item pricing
-- [ ] Outbound booking link tracking
+- [x] Outbound booking link tracking
 - [x] Observability logs for parse, provider latency, and package generation
 - [ ] Request deadline and graceful fallback states
 

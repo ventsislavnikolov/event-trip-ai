@@ -1,3 +1,5 @@
+"use client";
+
 import { cn } from "@/lib/utils";
 
 export type EventTripPackageTier = "Budget" | "Best Value" | "Premium";
@@ -22,6 +24,51 @@ export type EventTripPackageCard = {
 type PackageCardsProps = {
   packages: EventTripPackageCard[];
 };
+
+type BookingLinkType = "ticket" | "flight" | "hotel";
+
+function trackOutboundBookingClick({
+  packageId,
+  tier,
+  linkType,
+  destinationUrl,
+  totalPrice,
+  currency,
+}: {
+  packageId: string;
+  tier: EventTripPackageTier;
+  linkType: BookingLinkType;
+  destinationUrl: string;
+  totalPrice: number;
+  currency: string;
+}) {
+  const payload = JSON.stringify({
+    packageId,
+    tier,
+    linkType,
+    destinationUrl,
+    totalPrice,
+    currency,
+    occurredAt: new Date().toISOString(),
+  });
+
+  if (typeof navigator !== "undefined" && typeof navigator.sendBeacon === "function") {
+    const blob = new Blob([payload], { type: "application/json" });
+    navigator.sendBeacon("/api/eventtrip/outbound", blob);
+    return;
+  }
+
+  void fetch("/api/eventtrip/outbound", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+    },
+    body: payload,
+    keepalive: true,
+  }).catch(() => {
+    // Swallow tracking errors to avoid disrupting navigation.
+  });
+}
 
 function formatPrice(amount: number, currency: string): string {
   return `${Math.round(amount * 100) / 100} ${currency}`;
@@ -89,7 +136,19 @@ export function PackageCards({ packages }: PackageCardsProps) {
             {tripPackage.bookingLinks?.ticket ? (
               <a
                 className="rounded-md border px-2 py-1 hover:bg-muted"
+                data-eventtrip-link-type="ticket"
+                data-eventtrip-package-id={tripPackage.id}
                 href={tripPackage.bookingLinks.ticket}
+                onClick={() =>
+                  trackOutboundBookingClick({
+                    packageId: tripPackage.id,
+                    tier: tripPackage.tier,
+                    linkType: "ticket",
+                    destinationUrl: tripPackage.bookingLinks?.ticket ?? "",
+                    totalPrice: tripPackage.totalPrice,
+                    currency: tripPackage.currency,
+                  })
+                }
                 rel="noreferrer noopener"
                 target="_blank"
               >
@@ -99,7 +158,19 @@ export function PackageCards({ packages }: PackageCardsProps) {
             {tripPackage.bookingLinks?.flight ? (
               <a
                 className="rounded-md border px-2 py-1 hover:bg-muted"
+                data-eventtrip-link-type="flight"
+                data-eventtrip-package-id={tripPackage.id}
                 href={tripPackage.bookingLinks.flight}
+                onClick={() =>
+                  trackOutboundBookingClick({
+                    packageId: tripPackage.id,
+                    tier: tripPackage.tier,
+                    linkType: "flight",
+                    destinationUrl: tripPackage.bookingLinks?.flight ?? "",
+                    totalPrice: tripPackage.totalPrice,
+                    currency: tripPackage.currency,
+                  })
+                }
                 rel="noreferrer noopener"
                 target="_blank"
               >
@@ -109,7 +180,19 @@ export function PackageCards({ packages }: PackageCardsProps) {
             {tripPackage.bookingLinks?.hotel ? (
               <a
                 className="rounded-md border px-2 py-1 hover:bg-muted"
+                data-eventtrip-link-type="hotel"
+                data-eventtrip-package-id={tripPackage.id}
                 href={tripPackage.bookingLinks.hotel}
+                onClick={() =>
+                  trackOutboundBookingClick({
+                    packageId: tripPackage.id,
+                    tier: tripPackage.tier,
+                    linkType: "hotel",
+                    destinationUrl: tripPackage.bookingLinks?.hotel ?? "",
+                    totalPrice: tripPackage.totalPrice,
+                    currency: tripPackage.currency,
+                  })
+                }
                 rel="noreferrer noopener"
                 target="_blank"
               >

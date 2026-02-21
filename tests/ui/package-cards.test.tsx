@@ -63,3 +63,12 @@ test("shows over-budget badge when package exceeds max budget", () => {
   assert.match(html, /Within budget/);
   assert.match(html, /Over by 70 EUR/);
 });
+
+test("adds outbound tracking metadata to booking links", () => {
+  const html = renderToStaticMarkup(<PackageCards packages={samplePackages} />);
+
+  assert.match(html, /data-eventtrip-link-type=\"ticket\"/);
+  assert.match(html, /data-eventtrip-link-type=\"flight\"/);
+  assert.match(html, /data-eventtrip-link-type=\"hotel\"/);
+  assert.match(html, /data-eventtrip-package-id=\"pkg-budget\"/);
+});
