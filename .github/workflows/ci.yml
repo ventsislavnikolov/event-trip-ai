@@ -36,7 +36,11 @@ jobs:
 
       - name: Smoke and unit tests
         run: |
-          node --test tests/smoke/template-baseline.test.js tests/smoke/mvp-surface.test.js
+          node --test \
+            tests/smoke/template-baseline.test.js \
+            tests/smoke/mvp-surface.test.js \
+            tests/env/check-required-env.test.mjs \
+            tests/env/launch-readiness.test.mjs
           pnpm exec tsx --test \
             tests/db/connection.test.ts \
             tests/intent/parse-intent.test.ts \

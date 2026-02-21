@@ -13,6 +13,14 @@ This runbook defines the minimum checks required before preview promotion and be
 
 ## Local Smoke Checks
 
+Preferred single-command execution:
+
+```bash
+pnpm launch:readiness
+```
+
+Use `pnpm launch:readiness:local` when Vercel credentials/env checks are not available locally, or `pnpm launch:readiness:fast` to skip Playwright during quick iterations.
+
 1. Install dependencies:
 ```bash
 pnpm install

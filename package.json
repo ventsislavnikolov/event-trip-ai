@@ -21,6 +21,9 @@
     "env:check:preview": "node scripts/check-required-env.mjs vercel-preview",
     "env:check:production": "node scripts/check-required-env.mjs vercel-production",
     "env:check:providers": "node scripts/check-required-env.mjs providers",
+    "launch:readiness": "node scripts/launch-readiness.mjs",
+    "launch:readiness:local": "node scripts/launch-readiness.mjs --local-only",
+    "launch:readiness:fast": "node scripts/launch-readiness.mjs --local-only --skip-e2e",
     "test": "export PLAYWRIGHT=True && pnpm exec playwright test"
   },
   "dependencies": {
