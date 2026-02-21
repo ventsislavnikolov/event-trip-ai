@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { parse as parseDotenv } from "dotenv";
+
 const PROFILES = {
   local: {
     required: ["AUTH_SECRET", "POSTGRES_URL"],
@@ -70,6 +73,38 @@ function isProvided(value) {
   return typeof value === "string" && value.trim().length > 0;
 }
 
+function loadLocalEnvFile(envFilePath) {
+  try {
+    const fileContents = readFileSync(envFilePath, "utf8");
+    return parseDotenv(fileContents);
+  } catch (error) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "code" in error &&
+      error.code === "ENOENT"
+    ) {
+      return {};
+    }
+
+    throw error;
+  }
+}
+
+function resolveEnvironmentForProfile({ env, profile, envFilePath }) {
+  if (profile !== "local") {
+    return env;
+  }
+
+  const localEnvValues = loadLocalEnvFile(envFilePath);
+
+  // Shell-exported values should win over file values.
+  return {
+    ...localEnvValues,
+    ...env,
+  };
+}
+
 export function evaluateEnvironment({ env, profile }) {
   const normalizedProfile = normalizeProfileName(profile);
 
@@ -106,16 +141,24 @@ export function formatFailureMessage(result) {
 export function runCli({
   argv = process.argv.slice(2),
   env = process.env,
+  envFilePath = ".env.local",
   stdout = console.log,
   stderr = console.error,
 } = {}) {
   const requestedProfile = argv[0] || "local";
+  const resolvedProfile = normalizeProfileName(requestedProfile);
 
   let evaluation;
 
   try {
-    evaluation = evaluateEnvironment({
+    const resolvedEnv = resolveEnvironmentForProfile({
       env,
+      profile: resolvedProfile,
+      envFilePath,
+    });
+
+    evaluation = evaluateEnvironment({
+      env: resolvedEnv,
       profile: requestedProfile,
     });
   } catch (error) {
