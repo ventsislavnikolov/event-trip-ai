@@ -88,7 +88,9 @@ function scoreCuratedEventMatch(
     }
   }
 
-  const queryTokens = normalizedQuery.split(" ").filter((token) => token.length >= 3);
+  const queryTokens = normalizedQuery
+    .split(" ")
+    .filter((token) => token.length >= 3);
   if (queryTokens.length === 0) {
     return 0;
   }
@@ -104,20 +106,22 @@ function scoreCuratedEventMatch(
   return score;
 }
 
-export async function searchCuratedEventIndex(
+export function searchCuratedEventIndex(
   query: string
 ): Promise<CuratedIndexEvent[]> {
   const normalizedQuery = query.trim();
   if (!normalizedQuery) {
-    return [];
+    return Promise.resolve([]);
   }
 
-  return CURATED_EVENTS.map((event) => ({
-    event,
-    score: scoreCuratedEventMatch(normalizedQuery, event),
-  }))
-    .filter(({ score }) => score > 0)
-    .sort((left, right) => right.score - left.score)
-    .slice(0, 5)
-    .map(({ event }) => event);
+  return Promise.resolve(
+    CURATED_EVENTS.map((event) => ({
+      event,
+      score: scoreCuratedEventMatch(normalizedQuery, event),
+    }))
+      .filter(({ score }) => score > 0)
+      .sort((left, right) => right.score - left.score)
+      .slice(0, 5)
+      .map(({ event }) => event)
+  );
 }

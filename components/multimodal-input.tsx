@@ -36,7 +36,6 @@ import {
 import { deriveEventTripConversationState } from "@/lib/eventtrip/conversation-state";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { EventTripConversationStateHint } from "./eventtrip/conversation-state-hint";
 import {
   PromptInput,
   PromptInputSubmit,
@@ -44,6 +43,7 @@ import {
   PromptInputToolbar,
   PromptInputTools,
 } from "./elements/prompt-input";
+import { EventTripConversationStateHint } from "./eventtrip/conversation-state-hint";
 import { ArrowUpIcon, PaperclipIcon, StopIcon } from "./icons";
 import { PreviewAttachment } from "./preview-attachment";
 import { Button } from "./ui/button";
@@ -67,7 +67,7 @@ function PureMultimodalInput({
   setMessages,
   sendMessage,
   className,
-  selectedVisibilityType,
+  selectedVisibilityType: _selectedVisibilityType,
   selectedModelId,
   onModelChange,
 }: {

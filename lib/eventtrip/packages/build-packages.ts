@@ -1,10 +1,10 @@
+import { buildEventTripOutboundLinks } from "../outbound-links";
 import {
   type PackageOptionInput,
   type RankedPackageOption,
   type RankedPackageResult,
   rankPackageOptions,
 } from "./ranking";
-import { buildEventTripOutboundLinks } from "../outbound-links";
 
 type BuildPackagesInput = {
   options: PackageOptionInput[];

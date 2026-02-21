@@ -52,13 +52,16 @@ function trackOutboundBookingClick({
     occurredAt: new Date().toISOString(),
   });
 
-  if (typeof navigator !== "undefined" && typeof navigator.sendBeacon === "function") {
+  if (
+    typeof navigator !== "undefined" &&
+    typeof navigator.sendBeacon === "function"
+  ) {
     const blob = new Blob([payload], { type: "application/json" });
     navigator.sendBeacon("/api/eventtrip/outbound", blob);
     return;
   }
 
-  void fetch("/api/eventtrip/outbound", {
+  fetch("/api/eventtrip/outbound", {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -67,6 +70,7 @@ function trackOutboundBookingClick({
     keepalive: true,
   }).catch(() => {
     // Swallow tracking errors to avoid disrupting navigation.
+    return undefined;
   });
 }
 

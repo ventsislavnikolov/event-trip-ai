@@ -41,7 +41,10 @@ function getLatestAssistantText(messages: EventTripMessageLike[]): string {
   return "";
 }
 
-function hasPartType(messages: EventTripMessageLike[], partType: string): boolean {
+function hasPartType(
+  messages: EventTripMessageLike[],
+  partType: string
+): boolean {
   return messages.some((message) =>
     (message.parts ?? []).some((part) => part.type === partType)
   );

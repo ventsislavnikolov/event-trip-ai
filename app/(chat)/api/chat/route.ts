@@ -216,7 +216,10 @@ export async function POST(request: Request) {
         hasIntent: Boolean(intentGateResult.intent),
       });
 
-      if (intentGateResult.shouldInterrupt && intentGateResult.followUpQuestion) {
+      if (
+        intentGateResult.shouldInterrupt &&
+        intentGateResult.followUpQuestion
+      ) {
         emitEventTripFunnelEvent("follow_up_requested", {
           chatId: id,
           modelId: primaryModelId,

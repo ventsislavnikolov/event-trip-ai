@@ -7,8 +7,8 @@ import {
 import type { PackageOptionInput } from "@/lib/eventtrip/packages/ranking";
 import { collectProviderData } from "@/lib/eventtrip/providers/collector";
 import {
-  searchCuratedEventIndex,
   type CuratedIndexEvent,
+  searchCuratedEventIndex,
 } from "@/lib/eventtrip/providers/curated-index";
 import {
   fetchSeatGeekEvents,

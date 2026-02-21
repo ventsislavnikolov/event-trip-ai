@@ -42,6 +42,24 @@
 - [ ] Publish and monitor first 48h
 - [ ] Launch retrospective
 
+## Current Launch Status (2026-02-21)
+
+Validated locally:
+
+- `pnpm lint`
+- `pnpm exec tsc --noEmit`
+- smoke tests (`node --test ...`)
+- CI unit suite (`pnpm exec tsx --test ...`)
+- `pnpm build`
+- core flow e2e (`CI=1 pnpm exec playwright test tests/e2e/core-flow.test.ts --project=e2e --workers=1 --reporter=dot`)
+
+Open blockers before preview/production deployment verification can be marked complete:
+
+- Vercel CLI is not authenticated (`pnpm dlx vercel whoami` fails without credentials/token).
+- Required preview/production env vars are missing in active environment checks:
+  - `AUTH_SECRET`
+  - `POSTGRES_URL`
+
 ## Launch Strategy
 
 1. ProductHunt

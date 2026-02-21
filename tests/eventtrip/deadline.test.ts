@@ -10,13 +10,10 @@ function sleep(ms: number): Promise<void> {
 }
 
 test("runWithDeadline returns the operation result when it finishes before deadline", async () => {
-  const result = await runWithDeadline(
-    async () => {
-      await sleep(5);
-      return "ok";
-    },
-    50
-  );
+  const result = await runWithDeadline(async () => {
+    await sleep(5);
+    return "ok";
+  }, 50);
 
   assert.equal(result, "ok");
 });

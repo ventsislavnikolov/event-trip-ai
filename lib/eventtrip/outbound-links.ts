@@ -13,7 +13,10 @@ const DEFAULT_BASE_URLS: Record<OutboundLinkType, string> = {
   hotel: "https://example.com/book/hotel",
 };
 
-function toAbsoluteBaseUrl(candidate: string | undefined, fallback: string): string {
+function toAbsoluteBaseUrl(
+  candidate: string | undefined,
+  fallback: string
+): string {
   if (!candidate?.trim()) {
     return fallback;
   }

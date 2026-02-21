@@ -23,6 +23,28 @@ Define the canonical EventTrip secrets policy for local development, Vercel prev
 
 ` .env.example` is the canonical source for key names.
 
+## Required Values Quick Start
+
+### `AUTH_SECRET`
+
+Generate a strong random value:
+
+```bash
+openssl rand -base64 32
+```
+
+Use the generated value for local, preview, and production.
+
+### `POSTGRES_URL`
+
+Use the Supabase Postgres connection string from:
+
+1. Supabase Dashboard -> your project -> `Settings` -> `Database`
+2. Copy the connection string in URI format
+3. Set it as `POSTGRES_URL` in local env and in Vercel preview/production envs
+
+Use direct pooler or direct database URL per your runtime constraints, but keep the key name exactly `POSTGRES_URL`.
+
 ## Provisioning on Vercel
 
 Add/update environment variables for each target:

@@ -1,12 +1,18 @@
-import { runEventTripPipeline } from "@/lib/eventtrip/pipeline/run-eventtrip-pipeline";
 import { calculatePercentile } from "@/lib/eventtrip/performance/percentiles";
+import { runEventTripPipeline } from "@/lib/eventtrip/pipeline/run-eventtrip-pipeline";
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-const SAMPLE_COUNT = Number.parseInt(process.env.EVENTTRIP_P95_SAMPLES ?? "30", 10);
-const TARGET_MS = Number.parseInt(process.env.EVENTTRIP_P95_TARGET_MS ?? "30000", 10);
+const SAMPLE_COUNT = Number.parseInt(
+  process.env.EVENTTRIP_P95_SAMPLES ?? "30",
+  10
+);
+const TARGET_MS = Number.parseInt(
+  process.env.EVENTTRIP_P95_TARGET_MS ?? "30000",
+  10
+);
 
 async function runSample() {
   const startedAt = Date.now();
@@ -100,7 +106,9 @@ async function main() {
   }
 
   const p95 = calculatePercentile(durations, 0.95);
-  const mean = Math.round(durations.reduce((sum, ms) => sum + ms, 0) / durations.length);
+  const mean = Math.round(
+    durations.reduce((sum, ms) => sum + ms, 0) / durations.length
+  );
 
   console.log(
     JSON.stringify(
