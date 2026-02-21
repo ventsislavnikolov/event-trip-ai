@@ -19,7 +19,7 @@
 - [x] Over-budget fallback and annotations
 
 ### Week 5: Product UX and Reliability
-- [ ] Smart prompt UI and conversation state model
+- [x] Smart prompt UI and conversation state model
 - [x] Event disambiguation picker UI
 - [x] Package result cards with line-item pricing
 - [x] Outbound booking link tracking

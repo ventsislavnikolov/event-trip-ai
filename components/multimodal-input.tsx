@@ -11,6 +11,7 @@ import {
   type SetStateAction,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -32,8 +33,10 @@ import {
   DEFAULT_CHAT_MODEL,
   modelsByProvider,
 } from "@/lib/ai/models";
+import { deriveEventTripConversationState } from "@/lib/eventtrip/conversation-state";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { EventTripConversationStateHint } from "./eventtrip/conversation-state-hint";
 import {
   PromptInput,
   PromptInputSubmit,
@@ -43,7 +46,6 @@ import {
 } from "./elements/prompt-input";
 import { ArrowUpIcon, PaperclipIcon, StopIcon } from "./icons";
 import { PreviewAttachment } from "./preview-attachment";
-import { SuggestedActions } from "./suggested-actions";
 import { Button } from "./ui/button";
 import type { VisibilityType } from "./visibility-selector";
 
@@ -143,6 +145,19 @@ function PureMultimodalInput({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadQueue, setUploadQueue] = useState<string[]>([]);
+  const conversationState = useMemo(
+    () => deriveEventTripConversationState(messages),
+    [messages]
+  );
+
+  const handlePromptSuggestion = useCallback(
+    (prompt: string) => {
+      setInput(prompt);
+      setLocalStorageInput(prompt);
+      textareaRef.current?.focus();
+    },
+    [setInput, setLocalStorageInput]
+  );
 
   const submitForm = useCallback(() => {
     window.history.pushState({}, "", `/chat/${chatId}`);
@@ -297,15 +312,12 @@ function PureMultimodalInput({
 
   return (
     <div className={cn("relative flex w-full flex-col gap-4", className)}>
-      {messages.length === 0 &&
-        attachments.length === 0 &&
-        uploadQueue.length === 0 && (
-          <SuggestedActions
-            chatId={chatId}
-            selectedVisibilityType={selectedVisibilityType}
-            sendMessage={sendMessage}
-          />
-        )}
+      {attachments.length === 0 && uploadQueue.length === 0 && (
+        <EventTripConversationStateHint
+          onPromptSelect={handlePromptSuggestion}
+          state={conversationState}
+        />
+      )}
 
       <input
         className="pointer-events-none fixed -top-4 -left-4 size-0.5 opacity-0"
