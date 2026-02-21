@@ -38,7 +38,17 @@ export async function GET(
 
     const result = await getLatestEventTripResultByChatId({ chatId: id });
 
-    return createApiSuccessResponse(result, { status: 200 });
+    if (!result) {
+      return createApiSuccessResponse(null, { status: 200 });
+    }
+
+    return createApiSuccessResponse(
+      {
+        ...result,
+        selectedEvent: result.event,
+      },
+      { status: 200 }
+    );
   } catch (error) {
     if (error instanceof ChatSDKError) {
       return error.toResponse();

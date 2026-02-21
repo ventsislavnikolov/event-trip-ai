@@ -23,6 +23,7 @@ import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import type { Vote } from "@/lib/db/schema";
 import { ChatSDKError } from "@/lib/errors";
 import { buildEventCandidateSelectionPrompt } from "@/lib/eventtrip/disambiguation-selection";
+import { formatEventTripHistorySummary } from "@/lib/eventtrip/persistence/history-summary";
 import { injectPersistedEventTripPackagesMessage } from "@/lib/eventtrip/persistence/hydrate-messages";
 import type { Attachment, ChatMessage, CustomUIDataTypes } from "@/lib/types";
 import { fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
@@ -177,12 +178,30 @@ export function Chat({
     fetcher
   );
   const { data: persistedEventTrip } = useSWR<{
+    eventQuery: string;
     originCity: string;
     travelers: number;
     maxBudgetPerPerson: number | null;
     selectedEvent: CustomUIDataTypes["eventtripSelectedEvent"] | null;
     packages: CustomUIDataTypes["eventtripPackages"];
   } | null>(messages.length > 0 ? `/api/chat/${id}/eventtrip` : null, fetcher);
+
+  const eventTripSummaryLabel = persistedEventTrip
+    ? formatEventTripHistorySummary({
+        eventQuery: persistedEventTrip.eventQuery,
+        originCity: persistedEventTrip.originCity,
+        travelers: persistedEventTrip.travelers,
+        maxBudgetPerPerson: persistedEventTrip.maxBudgetPerPerson,
+        event: persistedEventTrip.selectedEvent
+          ? {
+              name: persistedEventTrip.selectedEvent.name,
+              city: persistedEventTrip.selectedEvent.city,
+              country: persistedEventTrip.selectedEvent.country,
+              startsAt: persistedEventTrip.selectedEvent.startsAt,
+            }
+          : null,
+      })
+    : undefined;
 
   useEffect(() => {
     if (
@@ -218,6 +237,7 @@ export function Chat({
       <div className="overscroll-behavior-contain flex h-dvh min-w-0 touch-pan-y flex-col bg-background">
         <ChatHeader
           chatId={id}
+          eventTripSummaryLabel={eventTripSummaryLabel}
           isReadonly={isReadonly}
           selectedVisibilityType={initialVisibilityType}
         />
