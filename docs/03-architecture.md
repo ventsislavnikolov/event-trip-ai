@@ -29,6 +29,7 @@ Live in `main`:
 - Chat header now shows persisted EventTrip summary context for trip chats (outside message stream and sidebar list).
 - Event selection tie-breaks now prefer nearest dated match and richer metadata when name-match scores are equal.
 - Persisted trip summaries now include budget-per-person context when available, for sidebar/header display.
+- Persisted trip summaries now include selected event start date when available from linked `et_events`.
 
 Not yet wired in runtime:
 - Curated event index integration and robust event resolution across multiple provider candidates.

@@ -21,6 +21,7 @@ test("formatEventTripHistorySummary formats event and location details", () => {
   assert.match(label, /2 travelers/);
   assert.match(label, /budget 1200 pp/);
   assert.match(label, /Boom, BE/);
+  assert.match(label, /starts 2026-07-20/);
 });
 
 test("formatEventTripHistorySummary falls back to query and singular traveler", () => {
@@ -35,4 +36,20 @@ test("formatEventTripHistorySummary falls back to query and singular traveler", 
   assert.match(label, /^US Open/);
   assert.match(label, /1 traveler/);
   assert.doesNotMatch(label, /budget/i);
+  assert.doesNotMatch(label, /starts/i);
+});
+
+test("formatEventTripHistorySummary ignores invalid start date values", () => {
+  const label = formatEventTripHistorySummary({
+    eventQuery: "US Open",
+    originCity: "Sofia",
+    travelers: 2,
+    maxBudgetPerPerson: 900,
+    event: {
+      name: "US Open 2026",
+      startsAt: "invalid-date",
+    },
+  });
+
+  assert.doesNotMatch(label, /starts/i);
 });
