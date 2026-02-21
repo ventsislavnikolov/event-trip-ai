@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { createApiSuccessResponse } from "@/lib/api/contracts";
 import { ChatSDKError } from "@/lib/errors";
+import { emitEventTripFunnelEvent } from "@/lib/eventtrip/analytics/funnel-events";
 
 const outboundClickSchema = z.object({
   packageId: z.string().min(1),
@@ -17,9 +18,7 @@ export async function POST(request: Request) {
     const json = await request.json();
     const payload = outboundClickSchema.parse(json);
 
-    if (process.env.NODE_ENV !== "test") {
-      console.info("[eventtrip.outbound-click]", payload);
-    }
+    emitEventTripFunnelEvent("outbound_click", payload);
 
     return createApiSuccessResponse({ tracked: true });
   } catch (_error) {

@@ -29,6 +29,7 @@ import {
 } from "@/lib/db/queries";
 import type { DBMessage } from "@/lib/db/schema";
 import { ChatSDKError } from "@/lib/errors";
+import { emitEventTripFunnelEvent } from "@/lib/eventtrip/analytics/funnel-events";
 import { resolveIntentModelIds } from "@/lib/eventtrip/intent/model-routing";
 import type { EventTripIntent } from "@/lib/eventtrip/intent/schema";
 import {
@@ -215,6 +216,20 @@ export async function POST(request: Request) {
         hasIntent: Boolean(intentGateResult.intent),
       });
 
+      if (intentGateResult.shouldInterrupt && intentGateResult.followUpQuestion) {
+        emitEventTripFunnelEvent("follow_up_requested", {
+          chatId: id,
+          modelId: primaryModelId,
+          fallbackModelId: fallbackModelId ?? null,
+        });
+      } else if (intentGateResult.intent) {
+        emitEventTripFunnelEvent("intent_detected", {
+          chatId: id,
+          modelId: primaryModelId,
+          fallbackModelId: fallbackModelId ?? null,
+        });
+      }
+
       if (
         intentGateResult.shouldInterrupt &&
         intentGateResult.followUpQuestion
@@ -295,6 +310,16 @@ export async function POST(request: Request) {
           selectedEventProvider: pipelineResult.selectedEvent?.provider ?? null,
           ...pipelineResult.observability,
         });
+
+        emitEventTripFunnelEvent(
+          pipelineResult.degraded ? "packages_fallback" : "packages_generated",
+          {
+            chatId: id,
+            packageCount: pipelineResult.packages.length,
+            candidateCount: pipelineResult.candidates.length,
+            providerFailureSummary: pipelineResult.providerFailureSummary,
+          }
+        );
 
         const summaryLine = pipelineResult.degraded
           ? `I generated your trip tiers with fallback pricing because some providers were unavailable (${pipelineResult.providerFailureSummary.join(

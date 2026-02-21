@@ -30,7 +30,7 @@
 - [x] Regression suite for core prompt-to-package flow
 - [x] Production smoke checks and rollback notes
 - [x] SEO metadata and sharing previews
-- [ ] Funnel analytics events
+- [x] Funnel analytics events
 - [ ] Performance pass (P95 within target budget)
 - [ ] Preview and production deployment verification
 
