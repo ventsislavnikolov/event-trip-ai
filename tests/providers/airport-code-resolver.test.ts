@@ -2,6 +2,17 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { resolveAirportCode } from "../../lib/eventtrip/providers/airport-code-resolver";
 
+const originalAliasMapEnv = process.env.EVENTTRIP_AIRPORT_ALIAS_MAP;
+
+test.afterEach(() => {
+  if (originalAliasMapEnv === undefined) {
+    process.env.EVENTTRIP_AIRPORT_ALIAS_MAP = undefined;
+    return;
+  }
+
+  process.env.EVENTTRIP_AIRPORT_ALIAS_MAP = originalAliasMapEnv;
+});
+
 test("resolveAirportCode keeps explicit iata code", () => {
   assert.equal(resolveAirportCode("SOF"), "SOF");
   assert.equal(resolveAirportCode("from (JFK)"), "JFK");
@@ -32,4 +43,20 @@ test("resolveAirportCode ignores airport suffix words", () => {
 test("resolveAirportCode returns undefined for unknown inputs", () => {
   assert.equal(resolveAirportCode("Atlantis"), undefined);
   assert.equal(resolveAirportCode(""), undefined);
+});
+
+test("resolveAirportCode supports json env alias overrides", () => {
+  process.env.EVENTTRIP_AIRPORT_ALIAS_MAP = JSON.stringify({
+    plovdiv: "PDV",
+  });
+
+  assert.equal(resolveAirportCode("Plovdiv"), "PDV");
+  assert.equal(resolveAirportCode("Trip from Plovdiv, Bulgaria"), "PDV");
+});
+
+test("resolveAirportCode supports csv env alias overrides", () => {
+  process.env.EVENTTRIP_AIRPORT_ALIAS_MAP = "varna=VAR; burgas=BOJ";
+
+  assert.equal(resolveAirportCode("Varna"), "VAR");
+  assert.equal(resolveAirportCode("Burgas airport"), "BOJ");
 });
