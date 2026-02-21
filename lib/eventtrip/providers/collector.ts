@@ -31,6 +31,11 @@ type CollectProviderDataResult<TTicketmaster, TSeatGeek, TTravelPayouts> = {
     seatgeek: ProviderFailure | null;
     travelpayouts: ProviderFailure | null;
   };
+  latencyMs: {
+    ticketmaster: number;
+    seatgeek: number;
+    travelpayouts: number;
+  };
 };
 
 class ProviderTimeoutError extends Error {
@@ -132,6 +137,8 @@ export async function collectProviderData<
 
   const settledEntries = await Promise.all(
     providerEntries.map(async ([providerName, providerCall]) => {
+      const startedAt = Date.now();
+
       try {
         const value = await runWithRetries({
           providerName,
@@ -144,12 +151,14 @@ export async function collectProviderData<
           providerName,
           value,
           failure: null,
+          latencyMs: Date.now() - startedAt,
         };
       } catch (error) {
         return {
           providerName,
           value: null,
           failure: toProviderFailure(error),
+          latencyMs: Date.now() - startedAt,
         };
       }
     })
@@ -175,9 +184,20 @@ export async function collectProviderData<
     TTravelPayouts
   >["failures"];
 
+  const latencyMs = {
+    ticketmaster: 0,
+    seatgeek: 0,
+    travelpayouts: 0,
+  } as CollectProviderDataResult<
+    TTicketmaster,
+    TSeatGeek,
+    TTravelPayouts
+  >["latencyMs"];
+
   for (const entry of settledEntries) {
     results[entry.providerName] = entry.value as never;
     failures[entry.providerName] = entry.failure;
+    latencyMs[entry.providerName] = entry.latencyMs;
   }
 
   const degraded = Object.values(failures).some((failure) => failure !== null);
@@ -186,5 +206,6 @@ export async function collectProviderData<
     degraded,
     results,
     failures,
+    latencyMs,
   };
 }

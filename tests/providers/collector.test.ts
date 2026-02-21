@@ -26,6 +26,9 @@ test("returns degraded result when one provider times out", async () => {
   assert.deepEqual(result.results.travelpayouts, ["travel-1"]);
   assert.equal(result.results.seatgeek, null);
   assert.equal(result.failures.seatgeek?.kind, "timeout");
+  assert.equal(typeof result.latencyMs.ticketmaster, "number");
+  assert.equal(typeof result.latencyMs.seatgeek, "number");
+  assert.equal(typeof result.latencyMs.travelpayouts, "number");
 });
 
 test("retries provider call once and succeeds", async () => {
@@ -51,4 +54,6 @@ test("retries provider call once and succeeds", async () => {
   assert.equal(result.degraded, false);
   assert.deepEqual(result.results.ticketmaster, ["ticket-1"]);
   assert.equal(result.failures.ticketmaster, null);
+  assert.equal(typeof result.latencyMs.ticketmaster, "number");
+  assert.equal(result.latencyMs.ticketmaster >= 0, true);
 });

@@ -23,7 +23,7 @@
 - [x] Event disambiguation picker UI
 - [x] Package result cards with line-item pricing
 - [ ] Outbound booking link tracking
-- [ ] Observability logs for parse, provider latency, and package generation
+- [x] Observability logs for parse, provider latency, and package generation
 - [ ] Request deadline and graceful fallback states
 
 ### Week 6: Hardening and Launch Readiness

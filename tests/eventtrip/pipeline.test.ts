@@ -19,6 +19,11 @@ test("runEventTripPipeline returns three ranked package cards", async () => {
     result.packages.map((pkg) => pkg.tier),
     ["Budget", "Best Value", "Premium"]
   );
+  assert.equal(typeof result.observability.totalDurationMs, "number");
+  assert.equal(typeof result.observability.packageGenerationDurationMs, "number");
+  assert.equal(typeof result.observability.providerLatencyMs.ticketmaster, "number");
+  assert.equal(typeof result.observability.providerLatencyMs.seatgeek, "number");
+  assert.equal(typeof result.observability.providerLatencyMs.travelpayouts, "number");
 });
 
 test("runEventTripPipeline marks over-budget tiers for low budget input", async () => {

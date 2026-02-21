@@ -25,6 +25,15 @@ type EventTripPipelineResult = {
   packages: ReturnType<typeof toPackageCards>;
   degraded: boolean;
   providerFailureSummary: string[];
+  observability: {
+    totalDurationMs: number;
+    packageGenerationDurationMs: number;
+    providerLatencyMs: {
+      ticketmaster: number;
+      seatgeek: number;
+      travelpayouts: number;
+    };
+  };
   candidates: {
     id: string;
     name: string;
@@ -464,6 +473,7 @@ export async function runEventTripPipeline({
   intent: EventTripIntent;
   providers?: EventTripPipelineProviders;
 }): Promise<EventTripPipelineResult> {
+  const pipelineStartedAt = Date.now();
   const travelers = intent.travelers ?? 1;
   const originCity = intent.originCity ?? "Unknown";
   const destinationCity = intent.event ?? "Unknown event";
@@ -568,10 +578,12 @@ export async function runEventTripPipeline({
     travel: travelOptions,
   });
   const fallbackOptions = buildFallbackPackageOptions({ travelers });
+  const packageGenerationStartedAt = Date.now();
   const ranked = buildPackages({
     options: providerOptions.length > 0 ? providerOptions : fallbackOptions,
     maxBudgetPerPerson: intent.maxBudgetPerPerson,
   });
+  const packageGenerationDurationMs = Date.now() - packageGenerationStartedAt;
 
   return {
     packages: toPackageCards(ranked.tiers),
@@ -579,6 +591,11 @@ export async function runEventTripPipeline({
     providerFailureSummary: formatProviderFailureSummary(
       providerResponse.failures
     ),
+    observability: {
+      totalDurationMs: Date.now() - pipelineStartedAt,
+      packageGenerationDurationMs,
+      providerLatencyMs: providerResponse.latencyMs,
+    },
     candidates: buildEventCandidates({
       ticketmasterEvents: providerResponse.results.ticketmaster ?? [],
       seatGeekEvents: providerResponse.results.seatgeek ?? [],

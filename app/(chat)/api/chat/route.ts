@@ -39,6 +39,17 @@ import { type PostRequestBody, postRequestBodySchema } from "./schema";
 
 export const maxDuration = 60;
 
+function logEventTripObservability(
+  event: string,
+  payload: Record<string, unknown>
+) {
+  if (process.env.NODE_ENV === "test") {
+    return;
+  }
+
+  console.info(`[eventtrip.observability] ${event}`, payload);
+}
+
 function getStreamContext() {
   try {
     return createResumableStreamContext({ waitUntil: after });
@@ -137,6 +148,7 @@ export async function POST(request: Request) {
         env: process.env,
       });
 
+      const intentParseStartedAt = Date.now();
       const intentGateResult = await buildIntentGateResult({
         message,
         model: getLanguageModel(primaryModelId),
@@ -145,6 +157,16 @@ export async function POST(request: Request) {
           ? getLanguageModel(fallbackModelId)
           : undefined,
         fallbackModelId: fallbackModelId ?? undefined,
+      });
+      const parseDurationMs = Date.now() - intentParseStartedAt;
+
+      logEventTripObservability("parse", {
+        chatId: id,
+        durationMs: parseDurationMs,
+        modelId: primaryModelId,
+        fallbackModelId: fallbackModelId ?? null,
+        shouldInterrupt: intentGateResult.shouldInterrupt,
+        hasIntent: Boolean(intentGateResult.intent),
       });
 
       if (
@@ -196,6 +218,16 @@ export async function POST(request: Request) {
 
         const pipelineResult = await runEventTripPipeline({
           intent: resolvedIntent,
+        });
+
+        logEventTripObservability("pipeline", {
+          chatId: id,
+          degraded: pipelineResult.degraded,
+          providerFailureSummary: pipelineResult.providerFailureSummary,
+          packageCount: pipelineResult.packages.length,
+          candidateCount: pipelineResult.candidates.length,
+          selectedEventProvider: pipelineResult.selectedEvent?.provider ?? null,
+          ...pipelineResult.observability,
         });
 
         const summaryLine = pipelineResult.degraded
