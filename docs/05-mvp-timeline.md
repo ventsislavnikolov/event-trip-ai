@@ -36,7 +36,7 @@
 
 ### Week 7: Launch Week
 - [ ] Final bug triage and blocker burn-down
-- [ ] Validate outbound links and affiliate instrumentation
+- [x] Validate outbound links and affiliate instrumentation
 - [ ] Freeze MVP scope and close remaining must-have issues
 - [ ] Launch decision review
 - [ ] Publish and monitor first 48h

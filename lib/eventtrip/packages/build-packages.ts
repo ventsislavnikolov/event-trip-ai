@@ -4,6 +4,7 @@ import {
   type RankedPackageResult,
   rankPackageOptions,
 } from "./ranking";
+import { buildEventTripOutboundLinks } from "../outbound-links";
 
 type BuildPackagesInput = {
   options: PackageOptionInput[];
@@ -84,10 +85,9 @@ export function toPackageCards(tiers: RankedPackageOption[]): {
     totalPrice: tier.totalPrice,
     withinBudget: tier.withinBudget,
     overBudgetAmount: tier.overBudgetAmount,
-    bookingLinks: {
-      ticket: `https://example.com/book/ticket/${tier.id}`,
-      flight: `https://example.com/book/flight/${tier.id}`,
-      hotel: `https://example.com/book/hotel/${tier.id}`,
-    },
+    bookingLinks: buildEventTripOutboundLinks({
+      packageId: tier.id,
+      tier: tier.tier,
+    }),
   }));
 }
