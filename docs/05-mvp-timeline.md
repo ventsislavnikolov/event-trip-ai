@@ -13,7 +13,7 @@
 ### Week 3-4: Intent + Data Providers + Package Engine
 - [x] AI SDK intent parsing with strict schema validation
 - [x] Missing-field follow-up flow
-- [ ] Event resolution across Ticketmaster, SeatGeek, curated index
+- [x] Event resolution across Ticketmaster, SeatGeek, curated index
 - [x] Travel collectors (flight + hotel) with timeout controls
 - [x] Deterministic package ranking (`Budget`, `Best Value`, `Premium`)
 - [x] Over-budget fallback and annotations

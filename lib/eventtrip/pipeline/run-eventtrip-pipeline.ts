@@ -7,6 +7,10 @@ import {
 import type { PackageOptionInput } from "@/lib/eventtrip/packages/ranking";
 import { collectProviderData } from "@/lib/eventtrip/providers/collector";
 import {
+  searchCuratedEventIndex,
+  type CuratedIndexEvent,
+} from "@/lib/eventtrip/providers/curated-index";
+import {
   fetchSeatGeekEvents,
   type SeatGeekEvent,
 } from "@/lib/eventtrip/providers/seatgeek";
@@ -41,7 +45,7 @@ type EventTripPipelineResult = {
     startsAt?: string;
   }[];
   selectedEvent: {
-    provider: "ticketmaster" | "seatgeek";
+    provider: "ticketmaster" | "seatgeek" | "curated";
     providerEventId: string;
     name: string;
     city?: string;
@@ -60,6 +64,7 @@ type TravelPayoutsBundle = {
 type EventTripPipelineProviders = {
   ticketmaster: (query: string) => Promise<TicketmasterEvent[]>;
   seatgeek: (query: string) => Promise<SeatGeekEvent[]>;
+  curatedIndex?: (query: string) => Promise<CuratedIndexEvent[]>;
   travelpayouts: (params: {
     originCity: string;
     destinationCity: string;
@@ -243,11 +248,13 @@ function compareScoredCandidates(
 function selectPreferredEventCandidate({
   ticketmasterEvents,
   seatGeekEvents,
+  curatedEvents,
   eventQuery,
   selectedEventCandidateId,
 }: {
   ticketmasterEvents: TicketmasterEvent[];
   seatGeekEvents: SeatGeekEvent[];
+  curatedEvents: CuratedIndexEvent[];
   eventQuery: string;
   selectedEventCandidateId?: string;
 }): EventTripPipelineResult["selectedEvent"] {
@@ -296,6 +303,26 @@ function selectPreferredEventCandidate({
     }
   }
 
+  if (normalizedSelectedCandidateId.startsWith("curated:")) {
+    const curatedId = normalizedSelectedCandidateId.slice("curated:".length);
+    const selectedCuratedEvent = curatedEvents.find(
+      (event) => event.id.toLowerCase() === curatedId
+    );
+
+    if (selectedCuratedEvent) {
+      return {
+        provider: "curated",
+        providerEventId: selectedCuratedEvent.id,
+        name: selectedCuratedEvent.name,
+        city: selectedCuratedEvent.city,
+        country: selectedCuratedEvent.country,
+        venue: selectedCuratedEvent.venue,
+        startsAt: selectedCuratedEvent.startsAt,
+        endsAt: selectedCuratedEvent.endsAt,
+      };
+    }
+  }
+
   const scoredCandidates: Array<
     EventTripPipelineResult["selectedEvent"] & { score: number }
   > = [];
@@ -330,6 +357,23 @@ function selectPreferredEventCandidate({
       score: scoreEventNameMatch({
         query: eventQuery,
         candidateName: seatGeekEvent.title,
+      }),
+    });
+  }
+
+  for (const curatedEvent of curatedEvents) {
+    scoredCandidates.push({
+      provider: "curated",
+      providerEventId: curatedEvent.id,
+      name: curatedEvent.name,
+      city: curatedEvent.city,
+      country: curatedEvent.country,
+      venue: curatedEvent.venue,
+      startsAt: curatedEvent.startsAt,
+      endsAt: curatedEvent.endsAt,
+      score: scoreEventNameMatch({
+        query: eventQuery,
+        candidateName: curatedEvent.name,
       }),
     });
   }
@@ -373,9 +417,11 @@ function toLocation(city?: string, country?: string): string | undefined {
 function buildEventCandidates({
   ticketmasterEvents,
   seatGeekEvents,
+  curatedEvents,
 }: {
   ticketmasterEvents: TicketmasterEvent[];
   seatGeekEvents: SeatGeekEvent[];
+  curatedEvents: CuratedIndexEvent[];
 }): EventTripPipelineResult["candidates"] {
   const candidates = [
     ...ticketmasterEvents.map((event) => ({
@@ -387,6 +433,12 @@ function buildEventCandidates({
     ...seatGeekEvents.map((event) => ({
       id: `seatgeek:${event.id}`,
       name: event.title,
+      location: toLocation(event.city, event.country),
+      startsAt: event.startsAt,
+    })),
+    ...curatedEvents.map((event) => ({
+      id: `curated:${event.id}`,
+      name: event.name,
       location: toLocation(event.city, event.country),
       startsAt: event.startsAt,
     })),
@@ -421,11 +473,13 @@ function buildProviderPackageOptions({
   travelers,
   ticketmasterEvents,
   seatGeekEvents,
+  curatedEvents,
   travel,
 }: {
   travelers: number;
   ticketmasterEvents: TicketmasterEvent[];
   seatGeekEvents: SeatGeekEvent[];
+  curatedEvents: CuratedIndexEvent[];
   travel: TravelPayoutsBundle;
 }): PackageOptionInput[] {
   const flights = [...travel.flights].sort((a, b) => a.price - b.price);
@@ -440,7 +494,9 @@ function buildProviderPackageOptions({
   const safeTravelers = Math.max(1, travelers);
   const tierCount = Math.min(3, flights.length, hotels.length);
   const tierTicketPricePerPerson =
-    ticketmasterEvents.length > 0 || seatGeekEvents.length > 0
+    ticketmasterEvents.length > 0 ||
+    seatGeekEvents.length > 0 ||
+    curatedEvents.length > 0
       ? [150, 200, 280]
       : [120, 170, 240];
   const tierQualityScores = [62, 82, 96];
@@ -481,6 +537,7 @@ export async function runEventTripPipeline({
   const activeProviders: EventTripPipelineProviders = providers ?? {
     ticketmaster: fetchTicketmasterEvents,
     seatgeek: fetchSeatGeekEvents,
+    curatedIndex: searchCuratedEventIndex,
     travelpayouts: async ({
       originCity,
       destinationCity,
@@ -529,9 +586,22 @@ export async function runEventTripPipeline({
     },
   });
 
+  let curatedEvents: CuratedIndexEvent[] = [];
+  const hasProviderEvents =
+    (providerResponse.results.ticketmaster?.length ?? 0) > 0 ||
+    (providerResponse.results.seatgeek?.length ?? 0) > 0;
+
+  if (!hasProviderEvents) {
+    curatedEvents = await searchEventsWithFallbacks({
+      provider: activeProviders.curatedIndex ?? searchCuratedEventIndex,
+      query: destinationCity,
+    }).catch(() => []);
+  }
+
   const selectedEvent = selectPreferredEventCandidate({
     ticketmasterEvents: providerResponse.results.ticketmaster ?? [],
     seatGeekEvents: providerResponse.results.seatgeek ?? [],
+    curatedEvents,
     eventQuery: destinationCity,
     selectedEventCandidateId: intent.selectedEventCandidateId,
   });
@@ -575,6 +645,7 @@ export async function runEventTripPipeline({
     travelers,
     ticketmasterEvents: providerResponse.results.ticketmaster ?? [],
     seatGeekEvents: providerResponse.results.seatgeek ?? [],
+    curatedEvents,
     travel: travelOptions,
   });
   const fallbackOptions = buildFallbackPackageOptions({ travelers });
@@ -599,6 +670,7 @@ export async function runEventTripPipeline({
     candidates: buildEventCandidates({
       ticketmasterEvents: providerResponse.results.ticketmaster ?? [],
       seatGeekEvents: providerResponse.results.seatgeek ?? [],
+      curatedEvents,
     }),
     selectedEvent,
   };

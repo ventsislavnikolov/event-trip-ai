@@ -50,7 +50,7 @@ type PersistedEventTripResult = {
   status: string;
   createdAt: string;
   event: {
-    provider: "ticketmaster" | "seatgeek";
+    provider: "ticketmaster" | "seatgeek" | "curated";
     providerEventId: string;
     name: string;
     city?: string;
@@ -148,7 +148,8 @@ function toPersistedEvent(
 ): PersistedEventTripResult["event"] {
   const provider =
     tripRequest.event_provider === "ticketmaster" ||
-    tripRequest.event_provider === "seatgeek"
+    tripRequest.event_provider === "seatgeek" ||
+    tripRequest.event_provider === "curated"
       ? tripRequest.event_provider
       : null;
 

@@ -10,7 +10,7 @@ import type { Suggestion } from "./db/schema";
 export type DataPart = { type: "append-message"; message: string };
 
 export type EventTripSelectedEventData = {
-  provider: "ticketmaster" | "seatgeek";
+  provider: "ticketmaster" | "seatgeek" | "curated";
   providerEventId: string;
   name: string;
   city?: string;

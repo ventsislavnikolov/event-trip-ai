@@ -19,7 +19,7 @@ type EventTripPackageCard = {
 };
 
 type EventTripSelectedEvent = {
-  provider: "ticketmaster" | "seatgeek";
+  provider: "ticketmaster" | "seatgeek" | "curated";
   providerEventId: string;
   name: string;
   city?: string;

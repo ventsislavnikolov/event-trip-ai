@@ -810,3 +810,79 @@ test("runEventTripPipeline tie-breaks matching events by richer metadata when da
   assert.equal(result.selectedEvent?.provider, "ticketmaster");
   assert.equal(result.selectedEvent?.providerEventId, "tm-1");
 });
+
+test("runEventTripPipeline resolves event from curated index when APIs return empty", async () => {
+  const result = await runEventTripPipeline({
+    intent: {
+      event: "Tomorrowland",
+      originCity: "SOF",
+      travelers: 1,
+      maxBudgetPerPerson: 1200,
+    },
+    providers: {
+      ticketmaster: async () => [],
+      seatgeek: async () => [],
+      curatedIndex: async () => [
+        {
+          id: "curated-tm-1",
+          name: "Tomorrowland 2026",
+          city: "Boom",
+          country: "BE",
+          startsAt: "2026-07-20T18:00:00.000Z",
+        },
+      ],
+      travelpayouts: async () => ({
+        flights: [
+          {
+            id: "f-1",
+            origin: "SOF",
+            destination: "BRU",
+            price: 140,
+            currency: "EUR",
+          },
+          {
+            id: "f-2",
+            origin: "SOF",
+            destination: "BRU",
+            price: 220,
+            currency: "EUR",
+          },
+          {
+            id: "f-3",
+            origin: "SOF",
+            destination: "BRU",
+            price: 330,
+            currency: "EUR",
+          },
+        ],
+        hotels: [
+          {
+            id: "h-1",
+            name: "Stay 1",
+            city: "Boom",
+            pricePerNight: 160,
+            currency: "EUR",
+          },
+          {
+            id: "h-2",
+            name: "Stay 2",
+            city: "Boom",
+            pricePerNight: 230,
+            currency: "EUR",
+          },
+          {
+            id: "h-3",
+            name: "Stay 3",
+            city: "Boom",
+            pricePerNight: 340,
+            currency: "EUR",
+          },
+        ],
+      }),
+    },
+  });
+
+  assert.equal(result.selectedEvent?.provider, "curated");
+  assert.equal(result.selectedEvent?.providerEventId, "curated-tm-1");
+  assert.equal(result.candidates[0]?.id, "curated:curated-tm-1");
+});
