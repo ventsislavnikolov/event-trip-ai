@@ -29,7 +29,7 @@
 ### Week 6: Hardening and Launch Readiness
 - [x] Regression suite for core prompt-to-package flow
 - [x] Production smoke checks and rollback notes
-- [ ] SEO metadata and sharing previews
+- [x] SEO metadata and sharing previews
 - [ ] Funnel analytics events
 - [ ] Performance pass (P95 within target budget)
 - [ ] Preview and production deployment verification
