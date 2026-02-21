@@ -180,6 +180,57 @@ function scoreEventNameMatch({
   return overlapCount * 10;
 }
 
+function toEventTimestamp(value?: string): number | null {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = new Date(value).getTime();
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
+function compareScoredCandidates(
+  left: EventTripPipelineResult["selectedEvent"] & { score: number },
+  right: EventTripPipelineResult["selectedEvent"] & { score: number }
+): number {
+  if (right.score !== left.score) {
+    return right.score - left.score;
+  }
+
+  const leftTimestamp = toEventTimestamp(left.startsAt);
+  const rightTimestamp = toEventTimestamp(right.startsAt);
+  if (leftTimestamp !== null && rightTimestamp === null) {
+    return -1;
+  }
+  if (leftTimestamp === null && rightTimestamp !== null) {
+    return 1;
+  }
+  if (leftTimestamp !== null && rightTimestamp !== null) {
+    const now = Date.now();
+    const leftDistance = Math.abs(leftTimestamp - now);
+    const rightDistance = Math.abs(rightTimestamp - now);
+    if (leftDistance !== rightDistance) {
+      return leftDistance - rightDistance;
+    }
+  }
+
+  const leftMetadataScore = Number(
+    Boolean(left.city || left.country || left.venue)
+  );
+  const rightMetadataScore = Number(
+    Boolean(right.city || right.country || right.venue)
+  );
+  if (leftMetadataScore !== rightMetadataScore) {
+    return rightMetadataScore - leftMetadataScore;
+  }
+
+  if (left.provider !== right.provider) {
+    return left.provider.localeCompare(right.provider);
+  }
+
+  return left.providerEventId.localeCompare(right.providerEventId);
+}
+
 function selectPreferredEventCandidate({
   ticketmasterEvents,
   seatGeekEvents,
@@ -275,7 +326,7 @@ function selectPreferredEventCandidate({
   }
 
   const bestScoredCandidate = scoredCandidates
-    .sort((left, right) => right.score - left.score)
+    .sort(compareScoredCandidates)
     .at(0);
   if (bestScoredCandidate) {
     const { score: _score, ...selectedCandidate } = bestScoredCandidate;

@@ -27,6 +27,7 @@ Live in `main`:
 - Travel provider retry now fills missing flights or hotels via selected-event-city fallback and merges partial results.
 - Airport resolver supports optional env-based city alias overrides (`EVENTTRIP_AIRPORT_ALIAS_MAP`) for runtime mapping updates.
 - Chat header now shows persisted EventTrip summary context for trip chats (outside message stream and sidebar list).
+- Event selection tie-breaks now prefer nearest dated match and richer metadata when name-match scores are equal.
 
 Not yet wired in runtime:
 - Curated event index integration and robust event resolution across multiple provider candidates.
