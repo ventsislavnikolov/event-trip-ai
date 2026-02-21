@@ -19,6 +19,7 @@ test("formatEventTripHistorySummary formats event and location details", () => {
   assert.match(label, /Tomorrowland 2026/);
   assert.match(label, /from Sofia/);
   assert.match(label, /2 travelers/);
+  assert.match(label, /budget 1200 pp/);
   assert.match(label, /Boom, BE/);
 });
 
@@ -33,4 +34,5 @@ test("formatEventTripHistorySummary falls back to query and singular traveler", 
 
   assert.match(label, /^US Open/);
   assert.match(label, /1 traveler/);
+  assert.doesNotMatch(label, /budget/i);
 });

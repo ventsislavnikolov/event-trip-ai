@@ -22,6 +22,19 @@ function toLocation(city?: string, country?: string): string | undefined {
   return normalizedCity || normalizedCountry || undefined;
 }
 
+function toBudgetLabel(maxBudgetPerPerson: number | null): string | undefined {
+  if (maxBudgetPerPerson === null || !Number.isFinite(maxBudgetPerPerson)) {
+    return undefined;
+  }
+
+  const rounded = Math.round(maxBudgetPerPerson * 100) / 100;
+  const normalizedBudget = Number.isInteger(rounded)
+    ? `${rounded}`
+    : `${rounded.toFixed(2)}`;
+
+  return `budget ${normalizedBudget} pp`;
+}
+
 export function formatEventTripHistorySummary(
   summary: EventTripHistorySummary
 ): string {
@@ -36,8 +49,9 @@ export function formatEventTripHistorySummary(
   const locationLabel = summary.event
     ? toLocation(summary.event.city, summary.event.country)
     : undefined;
+  const budgetLabel = toBudgetLabel(summary.maxBudgetPerPerson);
 
-  return [eventLabel, originLabel, travelersLabel, locationLabel]
+  return [eventLabel, originLabel, travelersLabel, budgetLabel, locationLabel]
     .filter((segment): segment is string => Boolean(segment))
     .join(" • ");
 }
