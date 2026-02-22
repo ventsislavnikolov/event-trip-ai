@@ -38,7 +38,7 @@
 - [ ] Final bug triage and blocker burn-down
 - [x] Validate outbound links and affiliate instrumentation
 - [x] Freeze MVP scope and close remaining must-have issues
-- [ ] Launch decision review
+- [x] Launch decision review
 - [ ] Publish and monitor first 48h
 - [ ] Launch retrospective
 
@@ -59,6 +59,12 @@ Open blockers before preview/production deployment verification can be marked co
 - Required preview/production env vars are missing in active environment checks:
   - `AUTH_SECRET`
   - `POSTGRES_URL`
+
+Latest launch decision artifact:
+
+- `docs/runbooks/launch-decision-2026-02-22.md` (`NO-GO`, generated from `pnpm launch:decision`)
+- local quality gates inside readiness are passing (`lint`, `typecheck`, `smoke-and-unit`, `build`)
+- remaining failed checks are deployment access/config only (`vercel-auth`, preview/prod env checks)
 
 Linear status alignment:
 
