@@ -7,6 +7,7 @@ This runbook defines the minimum checks required before preview promotion and be
 ## Preconditions
 
 - `.env.local` contains required values (`AUTH_SECRET`, `POSTGRES_URL`, and model/provider keys).
+- Environment bootstrap is completed (`docs/runbooks/env-bootstrap.md`).
 - Database migrations are up to date.
 - Branch is rebased on latest mainline.
 - Required environment keys are validated with `pnpm env:check:local` (see `docs/runbooks/vercel-secrets-policy.md`).

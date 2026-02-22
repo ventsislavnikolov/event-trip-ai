@@ -69,6 +69,7 @@ Latest launch decision artifact:
   - `docs/runbooks/launch-48h-monitoring.md`
   - `docs/runbooks/launch-retrospective-template.md`
 - final bug triage report: `docs/runbooks/launch-bug-triage-2026-02-22.md`
+- env bootstrap runbook: `docs/runbooks/env-bootstrap.md`
 
 Linear status alignment:
 
