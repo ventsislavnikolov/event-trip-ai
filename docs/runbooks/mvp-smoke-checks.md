@@ -21,6 +21,12 @@ pnpm launch:readiness
 
 Use `pnpm launch:readiness:local` when Vercel credentials/env checks are not available locally, or `pnpm launch:readiness:fast` to skip Playwright during quick iterations.
 
+Generate a dated launch GO/NO-GO artifact:
+
+```bash
+pnpm launch:decision
+```
+
 1. Install dependencies:
 ```bash
 pnpm install

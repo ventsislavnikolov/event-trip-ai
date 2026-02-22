@@ -24,6 +24,7 @@
     "launch:readiness": "node scripts/launch-readiness.mjs",
     "launch:readiness:local": "node scripts/launch-readiness.mjs --local-only",
     "launch:readiness:fast": "node scripts/launch-readiness.mjs --local-only --skip-e2e",
+    "launch:decision": "node scripts/launch-decision-report.mjs",
     "test": "export PLAYWRIGHT=True && pnpm exec playwright test"
   },
   "dependencies": {

@@ -40,7 +40,8 @@ jobs:
             tests/smoke/template-baseline.test.js \
             tests/smoke/mvp-surface.test.js \
             tests/env/check-required-env.test.mjs \
-            tests/env/launch-readiness.test.mjs
+            tests/env/launch-readiness.test.mjs \
+            tests/env/launch-decision-report.test.mjs
           pnpm exec tsx --test \
             tests/db/connection.test.ts \
             tests/intent/parse-intent.test.ts \
