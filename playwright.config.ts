@@ -12,6 +12,8 @@ config({
 
 /* Use process.env.PORT by default and fallback to port 3000 */
 const PORT = process.env.PORT || 3000;
+const PLAYWRIGHT_AUTH_SECRET =
+  process.env.AUTH_SECRET || "playwright-test-auth-secret";
 
 /**
  * Set webServer.url and use.baseURL with the location
@@ -93,6 +95,10 @@ export default defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: {
     command: "pnpm dev",
+    env: {
+      ...process.env,
+      AUTH_SECRET: PLAYWRIGHT_AUTH_SECRET,
+    },
     url: `${baseURL}/ping`,
     timeout: 120 * 1000,
     reuseExistingServer: !process.env.CI,

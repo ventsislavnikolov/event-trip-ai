@@ -1,4 +1,8 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
+import { encode } from "next-auth/jwt";
+
+const PLAYWRIGHT_AUTH_SECRET =
+  process.env.AUTH_SECRET ?? "playwright-test-auth-secret";
 
 function createMockUIMessageStream(text: string): string {
   return [
@@ -15,10 +19,28 @@ function createMockUIMessageStream(text: string): string {
   ].join("\n");
 }
 
+async function authenticateTestSession(page: Page) {
+  const token = await encode({
+    token: {
+      id: "playwright-guest-user",
+      type: "guest",
+      email: "guest-123",
+    },
+    secret: PLAYWRIGHT_AUTH_SECRET,
+    salt: "authjs.session-token",
+  });
+
+  await page.context().setExtraHTTPHeaders({
+    Authorization: `Bearer ${token}`,
+  });
+}
+
 test.describe("Core Flow Smoke", () => {
   test("happy path: prompt submission renders assistant response", async ({
     page,
   }) => {
+    await authenticateTestSession(page);
+
     await page.route("**/api/chat", async (route) => {
       await route.fulfill({
         status: 200,
@@ -47,6 +69,8 @@ test.describe("Core Flow Smoke", () => {
   test("degraded path: chat API failure surfaces user-visible error", async ({
     page,
   }) => {
+    await authenticateTestSession(page);
+
     await page.route("**/api/chat", async (route) => {
       await route.fulfill({
         status: 500,
