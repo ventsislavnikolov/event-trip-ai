@@ -35,7 +35,7 @@
 - [ ] Preview and production deployment verification
 
 ### Week 7: Launch Week
-- [ ] Final bug triage and blocker burn-down
+- [x] Final bug triage and blocker burn-down
 - [x] Validate outbound links and affiliate instrumentation
 - [x] Freeze MVP scope and close remaining must-have issues
 - [x] Launch decision review
@@ -68,6 +68,7 @@ Latest launch decision artifact:
 - launch-week execution docs are prepared:
   - `docs/runbooks/launch-48h-monitoring.md`
   - `docs/runbooks/launch-retrospective-template.md`
+- final bug triage report: `docs/runbooks/launch-bug-triage-2026-02-22.md`
 
 Linear status alignment:
 
