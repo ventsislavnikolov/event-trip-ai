@@ -15,7 +15,7 @@ const LOCAL_CHECKS = [
     id: "smoke-and-unit",
     label: "Smoke and unit suite",
     command: [
-      "node --test tests/smoke/template-baseline.test.js tests/smoke/mvp-surface.test.js",
+      "node --test tests/smoke/template-baseline.test.js tests/smoke/mvp-surface.test.js tests/smoke/chat-stream-id-uuid.test.js",
       "pnpm exec tsx --test \\",
       "  tests/db/connection.test.ts \\",
       "  tests/intent/parse-intent.test.ts \\",

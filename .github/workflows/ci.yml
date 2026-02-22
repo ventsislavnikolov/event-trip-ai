@@ -39,6 +39,7 @@ jobs:
           node --test \
             tests/smoke/template-baseline.test.js \
             tests/smoke/mvp-surface.test.js \
+            tests/smoke/chat-stream-id-uuid.test.js \
             tests/env/check-required-env.test.mjs \
             tests/env/launch-readiness.test.mjs \
             tests/env/launch-decision-report.test.mjs

@@ -179,6 +179,12 @@ export async function fetchTravelPayoutsHotels(params: {
     cache: "no-store",
   });
 
+  // Hotellook cache endpoint can return 404 for unsupported locations/dates.
+  // Treat that as "no hotel offers" instead of a hard provider failure.
+  if (response.status === 404) {
+    return [];
+  }
+
   if (!response.ok) {
     throw new Error(
       `Travelpayouts hotels request failed with status ${response.status}`

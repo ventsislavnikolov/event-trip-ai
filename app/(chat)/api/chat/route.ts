@@ -269,6 +269,7 @@ export async function POST(request: Request) {
               });
             }
           },
+          generateId: generateUUID,
           onError: () => "Oops, an error occurred!",
         });
 
@@ -394,6 +395,7 @@ export async function POST(request: Request) {
               );
             }
           },
+          generateId: generateUUID,
           onError: () => "Oops, an error occurred!",
         });
 

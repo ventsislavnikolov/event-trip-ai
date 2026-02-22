@@ -252,6 +252,27 @@ test("maps city names to airport codes for Travelpayouts flights", async () => {
   resetEnv();
 });
 
+test("returns empty hotels when Travelpayouts hotels endpoint returns 404", async () => {
+  process.env.TRAVELPAYOUTS_API_TOKEN = "tp-token";
+  let requestUrl = "";
+
+  mockFetch((input) => {
+    requestUrl = input;
+    return new Response("Not Found", { status: 404 });
+  });
+
+  const hotels = await fetchTravelPayoutsHotels({
+    destinationCity: "Berlin",
+    checkInDate: "2026-09-10",
+    checkOutDate: "2026-09-15",
+  });
+
+  assert.deepEqual(hotels, []);
+  assert.match(requestUrl, /api\/v2\/cache\.json/i);
+
+  resetEnv();
+});
+
 test("returns empty flights when airport codes cannot be resolved", async () => {
   process.env.TRAVELPAYOUTS_API_TOKEN = "tp-token";
   let called = false;
