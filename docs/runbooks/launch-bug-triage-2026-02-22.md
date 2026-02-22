@@ -36,4 +36,5 @@ Deployment configuration blockers only:
 ## Decision
 
 - Bug triage is complete.
-- Launch remains `NO-GO` until deployment access/config blockers are resolved.
+- Initial triage was `NO-GO` pending deployment access/config.
+- Follow-up status: deployment blockers were resolved and launch readiness now reports `GO` (see `docs/runbooks/launch-decision-2026-02-22.md`).

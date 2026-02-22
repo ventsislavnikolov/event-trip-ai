@@ -32,7 +32,7 @@
 - [x] SEO metadata and sharing previews
 - [x] Funnel analytics events
 - [x] Performance pass (P95 within target budget)
-- [ ] Preview and production deployment verification
+- [x] Preview and production deployment verification
 
 ### Week 7: Launch Week
 - [x] Final bug triage and blocker burn-down
@@ -53,18 +53,16 @@ Validated locally:
 - `pnpm build`
 - core flow e2e (`CI=1 pnpm exec playwright test tests/e2e/core-flow.test.ts --project=e2e --workers=1 --reporter=dot`)
 
-Open blockers before preview/production deployment verification can be marked complete:
+Deployment verification status:
 
-- Vercel CLI is not authenticated (`pnpm dlx vercel whoami` fails without credentials/token).
-- Required preview/production env vars are missing in active environment checks:
-  - `AUTH_SECRET`
-  - `POSTGRES_URL`
+- `pnpm launch:readiness -- --skip-e2e` is passing end-to-end.
+- Vercel auth check is passing.
+- Preview/production env checks are passing for required keys (`AUTH_SECRET`, `POSTGRES_URL`).
 
 Latest launch decision artifact:
 
-- `docs/runbooks/launch-decision-2026-02-22.md` (`NO-GO`, generated from `pnpm launch:decision`)
-- local quality gates inside readiness are passing (`lint`, `typecheck`, `smoke-and-unit`, `build`)
-- remaining failed checks are deployment access/config only (`vercel-auth`, preview/prod env checks)
+- `docs/runbooks/launch-decision-2026-02-22.md` (`GO`, generated from `pnpm launch:decision`)
+- launch readiness quality gates are passing (`lint`, `typecheck`, `smoke-and-unit`, `build`, `vercel-auth`, env checks)
 - launch-week execution docs are prepared:
   - `docs/runbooks/launch-48h-monitoring.md`
   - `docs/runbooks/launch-retrospective-template.md`
@@ -73,8 +71,8 @@ Latest launch decision artifact:
 
 Linear status alignment:
 
-- Remaining open issue for launch hardening: `VEN-274` (`In Progress`, blocked by deploy credentials/secrets)
-- No remaining `Backlog` or `In Review` items in the Event Trip AI project
+- Launch-hardening blocker issue `VEN-274` is ready to close after this verification update.
+- No remaining `Backlog` or `In Review` items in the Event Trip AI project.
 
 ## Launch Strategy
 

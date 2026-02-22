@@ -56,12 +56,26 @@ const DEPLOY_CHECKS = [
   {
     id: "env-check-preview",
     label: "Preview environment keys",
-    command: "pnpm -s env:check:preview",
+    command: [
+      "mkdir -p .vercel",
+      "pnpm dlx vercel env pull .vercel/.env.preview --environment=preview --yes >/dev/null",
+      "set -a",
+      "source .vercel/.env.preview",
+      "set +a",
+      "pnpm -s env:check:preview",
+    ].join("\n"),
   },
   {
     id: "env-check-production",
     label: "Production environment keys",
-    command: "pnpm -s env:check:production",
+    command: [
+      "mkdir -p .vercel",
+      "pnpm dlx vercel env pull .vercel/.env.production --environment=production --yes >/dev/null",
+      "set -a",
+      "source .vercel/.env.production",
+      "set +a",
+      "pnpm -s env:check:production",
+    ].join("\n"),
   },
 ];
 
