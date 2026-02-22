@@ -37,12 +37,12 @@
 ### Week 7: Launch Week
 - [ ] Final bug triage and blocker burn-down
 - [x] Validate outbound links and affiliate instrumentation
-- [ ] Freeze MVP scope and close remaining must-have issues
+- [x] Freeze MVP scope and close remaining must-have issues
 - [ ] Launch decision review
 - [ ] Publish and monitor first 48h
 - [ ] Launch retrospective
 
-## Current Launch Status (2026-02-21)
+## Current Launch Status (2026-02-22)
 
 Validated locally:
 
@@ -59,6 +59,11 @@ Open blockers before preview/production deployment verification can be marked co
 - Required preview/production env vars are missing in active environment checks:
   - `AUTH_SECRET`
   - `POSTGRES_URL`
+
+Linear status alignment:
+
+- Remaining open issue for launch hardening: `VEN-274` (`In Progress`, blocked by deploy credentials/secrets)
+- No remaining `Backlog` or `In Review` items in the Event Trip AI project
 
 ## Launch Strategy
 
