@@ -65,6 +65,9 @@ Latest launch decision artifact:
 - `docs/runbooks/launch-decision-2026-02-22.md` (`NO-GO`, generated from `pnpm launch:decision`)
 - local quality gates inside readiness are passing (`lint`, `typecheck`, `smoke-and-unit`, `build`)
 - remaining failed checks are deployment access/config only (`vercel-auth`, preview/prod env checks)
+- launch-week execution docs are prepared:
+  - `docs/runbooks/launch-48h-monitoring.md`
+  - `docs/runbooks/launch-retrospective-template.md`
 
 Linear status alignment:
 

@@ -91,3 +91,10 @@ If smoke checks fail after deployment:
 1. Roll back to previous healthy Vercel deployment.
 2. Re-run local smoke checks against the rollback branch.
 3. Open/attach incident ticket with failing command output and root cause notes.
+
+## Post-Launch Operations
+
+After deployment is approved, execute:
+
+- `docs/runbooks/launch-48h-monitoring.md` for first-48h operational checks.
+- `docs/runbooks/launch-retrospective-template.md` to capture launch retrospective outcomes and actions.
