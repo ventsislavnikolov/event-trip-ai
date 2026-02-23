@@ -198,6 +198,7 @@ export async function POST(request: Request) {
       const intentParseStartedAt = Date.now();
       const intentGateResult = await buildIntentGateResult({
         message,
+        messages: uiMessages,
         model: getLanguageModel(primaryModelId),
         modelId: primaryModelId,
         fallbackModel: fallbackModelId

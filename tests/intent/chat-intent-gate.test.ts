@@ -122,3 +122,42 @@ test("buildIntentGateResult routes openai model ids through the OpenAI adapter",
   assert.equal(result.followUpQuestion, null);
   assert.match(capturedPrompt, /OpenAI parseIntent adapter/i);
 });
+
+test("buildIntentGateResult resolves direct origin answer from prior follow-up context", async () => {
+  const result = await buildIntentGateResult({
+    message: {
+      role: "user",
+      parts: [{ type: "text", text: "Sofia" }],
+    },
+    messages: [
+      {
+        role: "user",
+        parts: [{ type: "text", text: "f1 in italy" }],
+      },
+      {
+        role: "assistant",
+        parts: [{ type: "text", text: "From which city are you traveling?" }],
+      },
+      {
+        role: "user",
+        parts: [{ type: "text", text: "Sofia" }],
+      },
+    ],
+    model: {} as never,
+    generateObjectFn: (() => {
+      throw new Error("force fallback parse");
+    }) as never,
+  });
+
+  assert.equal(result.shouldInterrupt, true);
+  assert.doesNotMatch(
+    result.followUpQuestion ?? "",
+    /which city are you traveling/i
+  );
+  assert.match(
+    result.followUpQuestion ?? "",
+    /(how many travelers|max budget)/i
+  );
+  assert.equal(result.intent?.originCity, "Sofia");
+  assert.ok(result.intent?.event?.toLowerCase().includes("f1 in italy"));
+});
