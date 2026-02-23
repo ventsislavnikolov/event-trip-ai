@@ -40,6 +40,7 @@ jobs:
             tests/smoke/template-baseline.test.js \
             tests/smoke/mvp-surface.test.js \
             tests/smoke/chat-stream-id-uuid.test.js \
+            tests/smoke/chat-selection-required-stream.test.js \
             tests/env/check-required-env.test.mjs \
             tests/env/launch-readiness.test.mjs \
             tests/env/launch-decision-report.test.mjs
@@ -51,6 +52,7 @@ jobs:
             tests/eventtrip/hydrate-messages.test.ts \
             tests/packages/ranking.test.ts \
             tests/providers/airport-code-resolver.test.ts \
+            tests/providers/curated-index.test.ts \
             tests/providers/provider-adapters.test.ts \
             tests/providers/collector.test.ts \
             tests/ui/package-cards.test.tsx \

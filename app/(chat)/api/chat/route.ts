@@ -71,6 +71,7 @@ function buildGracefulFallbackPipelineResult({
   return {
     packages: toPackageCards(ranked.tiers),
     degraded: true,
+    selectionRequired: false,
     providerFailureSummary: [reason],
     observability: {
       totalDurationMs: elapsedMs,
@@ -79,6 +80,11 @@ function buildGracefulFallbackPipelineResult({
         ticketmaster: 0,
         seatgeek: 0,
         travelpayouts: 0,
+      },
+      queryVariantCounts: {
+        ticketmaster: 0,
+        seatgeek: 0,
+        curated: 0,
       },
     },
     candidates: [],
@@ -309,6 +315,8 @@ export async function POST(request: Request) {
         logEventTripObservability("pipeline", {
           chatId: id,
           degraded: pipelineResult.degraded,
+          selectionRequired: pipelineResult.selectionRequired,
+          selectionReason: pipelineResult.selectionReason ?? null,
           providerFailureSummary: pipelineResult.providerFailureSummary,
           packageCount: pipelineResult.packages.length,
           candidateCount: pipelineResult.candidates.length,
@@ -316,21 +324,35 @@ export async function POST(request: Request) {
           ...pipelineResult.observability,
         });
 
-        emitEventTripFunnelEvent(
-          pipelineResult.degraded ? "packages_fallback" : "packages_generated",
-          {
+        if (pipelineResult.selectionRequired) {
+          emitEventTripFunnelEvent("event_selection_required", {
             chatId: id,
             packageCount: pipelineResult.packages.length,
             candidateCount: pipelineResult.candidates.length,
+            selectionReason: pipelineResult.selectionReason ?? null,
             providerFailureSummary: pipelineResult.providerFailureSummary,
-          }
-        );
+          });
+        } else {
+          emitEventTripFunnelEvent(
+            pipelineResult.degraded
+              ? "packages_fallback"
+              : "packages_generated",
+            {
+              chatId: id,
+              packageCount: pipelineResult.packages.length,
+              candidateCount: pipelineResult.candidates.length,
+              providerFailureSummary: pipelineResult.providerFailureSummary,
+            }
+          );
+        }
 
-        const summaryLine = pipelineResult.degraded
-          ? `I generated your trip tiers with fallback pricing because some providers were unavailable (${pipelineResult.providerFailureSummary.join(
-              "; "
-            )}).`
-          : "I generated your trip tiers with deterministic ranking across Budget, Best Value, and Premium.";
+        const summaryLine = pipelineResult.selectionRequired
+          ? "I found multiple matching events. Choose one event to continue pricing."
+          : pipelineResult.degraded
+            ? `I generated your trip tiers with fallback pricing because some providers were unavailable (${pipelineResult.providerFailureSummary.join(
+                "; "
+              )}).`
+            : "I generated your trip tiers with deterministic ranking across Budget, Best Value, and Premium.";
 
         const eventTripResultStream = createUIMessageStream<ChatMessage>({
           execute: ({ writer }) => {
@@ -341,10 +363,12 @@ export async function POST(request: Request) {
               });
             }
 
-            writer.write({
-              type: "data-eventtripPackages",
-              data: pipelineResult.packages,
-            });
+            if (!pipelineResult.selectionRequired) {
+              writer.write({
+                type: "data-eventtripPackages",
+                data: pipelineResult.packages,
+              });
+            }
 
             if (pipelineResult.candidates.length > 0) {
               writer.write({
@@ -381,19 +405,21 @@ export async function POST(request: Request) {
               });
             }
 
-            try {
-              await saveEventTripPipelineResult({
-                chatId: id,
-                intent: resolvedIntent,
-                packages: pipelineResult.packages,
-                selectedEvent: pipelineResult.selectedEvent,
-              });
-            } catch (error) {
-              console.warn(
-                "Failed to persist EventTrip pipeline result",
-                id,
-                error
-              );
+            if (!pipelineResult.selectionRequired) {
+              try {
+                await saveEventTripPipelineResult({
+                  chatId: id,
+                  intent: resolvedIntent,
+                  packages: pipelineResult.packages,
+                  selectedEvent: pipelineResult.selectedEvent,
+                });
+              } catch (error) {
+                console.warn(
+                  "Failed to persist EventTrip pipeline result",
+                  id,
+                  error
+                );
+              }
             }
           },
           generateId: generateUUID,

@@ -28,6 +28,8 @@ import {
 type EventTripPipelineResult = {
   packages: ReturnType<typeof toPackageCards>;
   degraded: boolean;
+  selectionRequired: boolean;
+  selectionReason?: "ambiguous_curated_fallback";
   providerFailureSummary: string[];
   observability: {
     totalDurationMs: number;
@@ -36,6 +38,11 @@ type EventTripPipelineResult = {
       ticketmaster: number;
       seatgeek: number;
       travelpayouts: number;
+    };
+    queryVariantCounts: {
+      ticketmaster: number;
+      seatgeek: number;
+      curated: number;
     };
   };
   candidates: {
@@ -73,8 +80,56 @@ type EventTripPipelineProviders = {
   }) => Promise<TravelPayoutsBundle>;
 };
 
+type EventSearchTrace<TEvent> = {
+  results: TEvent[];
+  queryVariants: string[];
+  attemptedVariants: number;
+};
+
 function normalizeEventQuery(value: string): string {
   return value.replace(/\s+/g, " ").trim();
+}
+
+function normalizeTokenizableText(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+const QUERY_STOPWORDS = new Set([
+  "a",
+  "an",
+  "and",
+  "for",
+  "from",
+  "in",
+  "on",
+  "the",
+  "to",
+  "trip",
+  "travel",
+  "travelers",
+  "traveler",
+  "adults",
+  "adult",
+  "people",
+  "person",
+  "with",
+  "max",
+  "budget",
+  "per",
+  "eur",
+  "euro",
+  "city",
+]);
+
+function tokenizeQuery(value: string): string[] {
+  return normalizeTokenizableText(value)
+    .split(" ")
+    .map((token) => token.trim())
+    .filter(Boolean);
 }
 
 function buildEventQueryFallbacks(query: string): string[] {
@@ -83,16 +138,82 @@ function buildEventQueryFallbacks(query: string): string[] {
     return [];
   }
 
+  const variants: string[] = [];
+  const seen = new Set<string>();
+  const appendVariant = (value: string) => {
+    const variant = normalizeEventQuery(value);
+    if (!variant) {
+      return;
+    }
+
+    const key = variant.toLowerCase();
+    if (seen.has(key)) {
+      return;
+    }
+
+    seen.add(key);
+    variants.push(variant);
+  };
+
+  appendVariant(normalized);
+
   const withoutYear = normalizeEventQuery(
     normalized.replace(/\b(19|20)\d{2}\b/g, "")
   );
+  appendVariant(withoutYear);
+
   const withoutEditionHints = normalizeEventQuery(
-    withoutYear.replace(/\b(edition|tour|live)\b/gi, "")
+    withoutYear.replace(/\b(edition|tour|live|event|festival|trip)\b/gi, "")
+  );
+  appendVariant(withoutEditionHints);
+
+  const highRecallBase = normalizeEventQuery(
+    tokenizeQuery(withoutEditionHints)
+      .filter((token) => !QUERY_STOPWORDS.has(token))
+      .join(" ")
+  );
+  appendVariant(highRecallBase);
+
+  const highRecallTokens = tokenizeQuery(highRecallBase).filter(
+    (token) => token.length >= 3
+  );
+  if (highRecallTokens.length >= 2) {
+    appendVariant(highRecallTokens.slice(0, 2).join(" "));
+  }
+  if (highRecallTokens.length >= 3) {
+    appendVariant(highRecallTokens.slice(0, 3).join(" "));
+  }
+  if (highRecallTokens.length >= 2) {
+    appendVariant(highRecallTokens.slice(-2).join(" "));
+  }
+
+  const normalizedLower = normalized.toLowerCase();
+  const isMotorsportQuery = /\b(formula\s*1|f1|grand prix|gp)\b/.test(
+    normalizedLower
   );
 
-  return Array.from(
-    new Set([normalized, withoutYear, withoutEditionHints].filter(Boolean))
-  );
+  if (isMotorsportQuery) {
+    appendVariant(normalized.replace(/\bf1\b/gi, "Formula 1"));
+    appendVariant(normalized.replace(/\bformula\s*1\b/gi, "F1"));
+
+    const motorsportCore = normalizeEventQuery(
+      tokenizeQuery(withoutYear.replace(/\b(formula|f1|grand|prix|gp)\b/gi, ""))
+        .filter((token) => !QUERY_STOPWORDS.has(token))
+        .join(" ")
+    );
+
+    if (motorsportCore) {
+      appendVariant(`Formula 1 ${motorsportCore}`);
+      appendVariant(`F1 ${motorsportCore}`);
+      appendVariant(`${motorsportCore} Grand Prix`);
+    }
+
+    appendVariant("Formula 1");
+    appendVariant("Grand Prix");
+    appendVariant("F1");
+  }
+
+  return variants;
 }
 
 async function searchEventsWithFallbacks<TEvent>({
@@ -101,17 +222,27 @@ async function searchEventsWithFallbacks<TEvent>({
 }: {
   provider: (query: string) => Promise<TEvent[]>;
   query: string;
-}): Promise<TEvent[]> {
+}): Promise<EventSearchTrace<TEvent>> {
   const queryVariants = buildEventQueryFallbacks(query);
+  const attemptedQueries: string[] = [];
 
   for (const queryVariant of queryVariants) {
+    attemptedQueries.push(queryVariant);
     const results = await provider(queryVariant);
     if (results.length > 0) {
-      return results;
+      return {
+        results,
+        queryVariants: attemptedQueries,
+        attemptedVariants: attemptedQueries.length,
+      };
     }
   }
 
-  return [];
+  return {
+    results: [],
+    queryVariants: attemptedQueries,
+    attemptedVariants: attemptedQueries.length,
+  };
 }
 
 function formatProviderFailureSummary(
@@ -145,11 +276,7 @@ function getTravelDates(): { departDate: string; returnDate: string } {
 }
 
 function normalizeEventText(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  return normalizeTokenizableText(value);
 }
 
 function tokenizeEventText(value: string): string[] {
@@ -534,6 +661,11 @@ export async function runEventTripPipeline({
   const originCity = intent.originCity ?? "Unknown";
   const destinationCity = intent.event ?? "Unknown event";
   const { departDate, returnDate } = getTravelDates();
+  const queryVariantCounts = {
+    ticketmaster: 0,
+    seatgeek: 0,
+    curated: 0,
+  };
   const activeProviders: EventTripPipelineProviders = providers ?? {
     ticketmaster: fetchTicketmasterEvents,
     seatgeek: fetchSeatGeekEvents,
@@ -566,16 +698,28 @@ export async function runEventTripPipeline({
     timeoutMs: 2000,
     retries: 1,
     providers: {
-      ticketmaster: async () =>
-        searchEventsWithFallbacks({
+      ticketmaster: async () => {
+        const tracedResult = await searchEventsWithFallbacks({
           provider: activeProviders.ticketmaster,
           query: destinationCity,
-        }),
-      seatgeek: async () =>
-        searchEventsWithFallbacks({
+        });
+        queryVariantCounts.ticketmaster = Math.max(
+          queryVariantCounts.ticketmaster,
+          tracedResult.attemptedVariants
+        );
+        return tracedResult.results;
+      },
+      seatgeek: async () => {
+        const tracedResult = await searchEventsWithFallbacks({
           provider: activeProviders.seatgeek,
           query: destinationCity,
-        }),
+        });
+        queryVariantCounts.seatgeek = Math.max(
+          queryVariantCounts.seatgeek,
+          tracedResult.attemptedVariants
+        );
+        return tracedResult.results;
+      },
       travelpayouts: async () =>
         activeProviders.travelpayouts({
           originCity,
@@ -592,19 +736,60 @@ export async function runEventTripPipeline({
     (providerResponse.results.seatgeek?.length ?? 0) > 0;
 
   if (!hasProviderEvents) {
-    curatedEvents = await searchEventsWithFallbacks({
+    const tracedCuratedResult = await searchEventsWithFallbacks({
       provider: activeProviders.curatedIndex ?? searchCuratedEventIndex,
       query: destinationCity,
-    }).catch(() => []);
+    }).catch(
+      () =>
+        ({
+          results: [],
+          queryVariants: [],
+          attemptedVariants: 0,
+        }) satisfies EventSearchTrace<CuratedIndexEvent>
+    );
+    curatedEvents = tracedCuratedResult.results;
+    queryVariantCounts.curated = tracedCuratedResult.attemptedVariants;
   }
 
-  const selectedEvent = selectPreferredEventCandidate({
+  const selectionRequired =
+    !hasProviderEvents &&
+    curatedEvents.length > 1 &&
+    !intent.selectedEventCandidateId;
+  const selectedEvent = selectionRequired
+    ? null
+    : selectPreferredEventCandidate({
+        ticketmasterEvents: providerResponse.results.ticketmaster ?? [],
+        seatGeekEvents: providerResponse.results.seatgeek ?? [],
+        curatedEvents,
+        eventQuery: destinationCity,
+        selectedEventCandidateId: intent.selectedEventCandidateId,
+      });
+  const candidates = buildEventCandidates({
     ticketmasterEvents: providerResponse.results.ticketmaster ?? [],
     seatGeekEvents: providerResponse.results.seatgeek ?? [],
     curatedEvents,
-    eventQuery: destinationCity,
-    selectedEventCandidateId: intent.selectedEventCandidateId,
   });
+  const providerFailureSummary = formatProviderFailureSummary(
+    providerResponse.failures
+  );
+
+  if (selectionRequired) {
+    return {
+      packages: [],
+      degraded: providerResponse.degraded,
+      selectionRequired: true,
+      selectionReason: "ambiguous_curated_fallback",
+      providerFailureSummary,
+      observability: {
+        totalDurationMs: Date.now() - pipelineStartedAt,
+        packageGenerationDurationMs: 0,
+        providerLatencyMs: providerResponse.latencyMs,
+        queryVariantCounts,
+      },
+      candidates,
+      selectedEvent: null,
+    };
+  }
 
   let travelOptions = providerResponse.results.travelpayouts ?? {
     flights: [],
@@ -659,19 +844,15 @@ export async function runEventTripPipeline({
   return {
     packages: toPackageCards(ranked.tiers),
     degraded: providerResponse.degraded,
-    providerFailureSummary: formatProviderFailureSummary(
-      providerResponse.failures
-    ),
+    selectionRequired: false,
+    providerFailureSummary,
     observability: {
       totalDurationMs: Date.now() - pipelineStartedAt,
       packageGenerationDurationMs,
       providerLatencyMs: providerResponse.latencyMs,
+      queryVariantCounts,
     },
-    candidates: buildEventCandidates({
-      ticketmasterEvents: providerResponse.results.ticketmaster ?? [],
-      seatGeekEvents: providerResponse.results.seatgeek ?? [],
-      curatedEvents,
-    }),
+    candidates,
     selectedEvent,
   };
 }

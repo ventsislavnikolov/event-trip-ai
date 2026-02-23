@@ -3,6 +3,73 @@ import test from "node:test";
 
 import { runEventTripPipeline } from "../../lib/eventtrip/pipeline/run-eventtrip-pipeline";
 
+const PROVIDER_FIXTURE_FLIGHTS = [
+  {
+    id: "f-1",
+    origin: "SOF",
+    destination: "BRU",
+    price: 140,
+    currency: "EUR",
+  },
+  {
+    id: "f-2",
+    origin: "SOF",
+    destination: "BRU",
+    price: 220,
+    currency: "EUR",
+  },
+  {
+    id: "f-3",
+    origin: "SOF",
+    destination: "BRU",
+    price: 330,
+    currency: "EUR",
+  },
+];
+
+const PROVIDER_FIXTURE_HOTELS = [
+  {
+    id: "h-1",
+    name: "Stay 1",
+    city: "Boom",
+    pricePerNight: 160,
+    currency: "EUR",
+  },
+  {
+    id: "h-2",
+    name: "Stay 2",
+    city: "Boom",
+    pricePerNight: 230,
+    currency: "EUR",
+  },
+  {
+    id: "h-3",
+    name: "Stay 3",
+    city: "Boom",
+    pricePerNight: 340,
+    currency: "EUR",
+  },
+];
+
+function createProviderFixture() {
+  return {
+    ticketmaster: async () => [
+      {
+        id: "tm-1",
+        name: "Tomorrowland 2026",
+        city: "Boom",
+        country: "BE",
+        startsAt: "2026-07-20T18:00:00.000Z",
+      },
+    ],
+    seatgeek: async () => [],
+    travelpayouts: async () => ({
+      flights: PROVIDER_FIXTURE_FLIGHTS,
+      hotels: PROVIDER_FIXTURE_HOTELS,
+    }),
+  };
+}
+
 test("runEventTripPipeline returns three ranked package cards", async () => {
   const result = await runEventTripPipeline({
     intent: {
@@ -11,9 +78,11 @@ test("runEventTripPipeline returns three ranked package cards", async () => {
       travelers: 2,
       maxBudgetPerPerson: 1200,
     },
+    providers: createProviderFixture(),
   });
 
   assert.equal(result.degraded, false);
+  assert.equal(result.selectionRequired, false);
   assert.equal(result.packages.length, 3);
   assert.deepEqual(
     result.packages.map((pkg) => pkg.tier),
@@ -36,6 +105,18 @@ test("runEventTripPipeline returns three ranked package cards", async () => {
     typeof result.observability.providerLatencyMs.travelpayouts,
     "number"
   );
+  assert.equal(
+    typeof result.observability.queryVariantCounts.ticketmaster,
+    "number"
+  );
+  assert.equal(
+    typeof result.observability.queryVariantCounts.seatgeek,
+    "number"
+  );
+  assert.equal(
+    typeof result.observability.queryVariantCounts.curated,
+    "number"
+  );
 });
 
 test("runEventTripPipeline marks over-budget tiers for low budget input", async () => {
@@ -46,6 +127,7 @@ test("runEventTripPipeline marks over-budget tiers for low budget input", async 
       travelers: 1,
       maxBudgetPerPerson: 400,
     },
+    providers: createProviderFixture(),
   });
 
   const budget = result.packages.find((pkg) => pkg.tier === "Budget");
@@ -579,6 +661,69 @@ test("runEventTripPipeline retries provider event lookup with normalized query v
   assert.equal(result.selectedEvent?.providerEventId, "tm-1");
 });
 
+test("runEventTripPipeline broadens motorsport queries before curated fallback", async () => {
+  const ticketmasterQueries: string[] = [];
+  const seatGeekQueries: string[] = [];
+  const curatedQueries: string[] = [];
+
+  const result = await runEventTripPipeline({
+    intent: {
+      event: "Formula 1 Italy Grand Prix 2026",
+      originCity: "SOF",
+      travelers: 1,
+      maxBudgetPerPerson: 1200,
+    },
+    providers: {
+      ticketmaster: (query) => {
+        ticketmasterQueries.push(query);
+        return Promise.resolve([]);
+      },
+      seatgeek: (query) => {
+        seatGeekQueries.push(query);
+        return Promise.resolve([]);
+      },
+      curatedIndex: (query) => {
+        curatedQueries.push(query);
+        if (query === "Formula 1") {
+          return Promise.resolve([
+            {
+              id: "curated-f1-italian-gp-2026",
+              name: "Formula 1 Italian Grand Prix 2026",
+              city: "Monza",
+              country: "IT",
+              startsAt: "2026-09-06T13:00:00.000Z",
+            },
+          ]);
+        }
+        return Promise.resolve([]);
+      },
+      travelpayouts: async () => ({
+        flights: PROVIDER_FIXTURE_FLIGHTS,
+        hotels: PROVIDER_FIXTURE_HOTELS,
+      }),
+    },
+  });
+
+  assert.equal(ticketmasterQueries.includes("Formula 1"), true);
+  assert.equal(
+    ticketmasterQueries.some((query) => /grand prix/i.test(query)),
+    true
+  );
+  assert.equal(
+    ticketmasterQueries.some((query) => query.includes("Italy")),
+    true
+  );
+  assert.equal(
+    seatGeekQueries.includes("Formula 1") &&
+      seatGeekQueries.some((query) => /grand prix/i.test(query)),
+    true
+  );
+  assert.equal(curatedQueries.includes("Formula 1"), true);
+  assert.equal(result.observability.queryVariantCounts.ticketmaster > 3, true);
+  assert.equal(result.observability.queryVariantCounts.seatgeek > 3, true);
+  assert.equal(result.selectedEvent?.provider, "curated");
+});
+
 test("runEventTripPipeline de-duplicates candidate list across providers", async () => {
   const result = await runEventTripPipeline({
     intent: {
@@ -896,5 +1041,91 @@ test("runEventTripPipeline resolves event from curated index when APIs return em
 
   assert.equal(result.selectedEvent?.provider, "curated");
   assert.equal(result.selectedEvent?.providerEventId, "curated-tm-1");
+  assert.equal(result.selectionRequired, false);
   assert.equal(result.candidates[0]?.id, "curated:curated-tm-1");
+});
+
+test("runEventTripPipeline requires explicit selection for ambiguous curated fallback", async () => {
+  const result = await runEventTripPipeline({
+    intent: {
+      event: "Formula 1 Italy Grand Prix 2026",
+      originCity: "SOF",
+      travelers: 1,
+      maxBudgetPerPerson: 1200,
+    },
+    providers: {
+      ticketmaster: async () => [],
+      seatgeek: async () => [],
+      curatedIndex: async () => [
+        {
+          id: "curated-f1-monaco-2026",
+          name: "Formula 1 Monaco Grand Prix 2026",
+          city: "Monte Carlo",
+          country: "MC",
+          startsAt: "2026-05-24T10:00:00.000Z",
+        },
+        {
+          id: "curated-f1-italian-gp-2026",
+          name: "Formula 1 Italian Grand Prix 2026",
+          city: "Monza",
+          country: "IT",
+          startsAt: "2026-09-06T13:00:00.000Z",
+        },
+      ],
+      travelpayouts: async () => ({
+        flights: PROVIDER_FIXTURE_FLIGHTS,
+        hotels: PROVIDER_FIXTURE_HOTELS,
+      }),
+    },
+  });
+
+  assert.equal(result.selectionRequired, true);
+  assert.equal(result.selectionReason, "ambiguous_curated_fallback");
+  assert.equal(result.selectedEvent, null);
+  assert.equal(result.packages.length, 0);
+  assert.equal(result.candidates.length, 2);
+});
+
+test("runEventTripPipeline generates packages after explicit curated selection", async () => {
+  const result = await runEventTripPipeline({
+    intent: {
+      event: "Formula 1 Italy Grand Prix 2026",
+      originCity: "SOF",
+      travelers: 1,
+      maxBudgetPerPerson: 1200,
+      selectedEventCandidateId: "curated:curated-f1-italian-gp-2026",
+    },
+    providers: {
+      ticketmaster: async () => [],
+      seatgeek: async () => [],
+      curatedIndex: async () => [
+        {
+          id: "curated-f1-monaco-2026",
+          name: "Formula 1 Monaco Grand Prix 2026",
+          city: "Monte Carlo",
+          country: "MC",
+          startsAt: "2026-05-24T10:00:00.000Z",
+        },
+        {
+          id: "curated-f1-italian-gp-2026",
+          name: "Formula 1 Italian Grand Prix 2026",
+          city: "Monza",
+          country: "IT",
+          startsAt: "2026-09-06T13:00:00.000Z",
+        },
+      ],
+      travelpayouts: async () => ({
+        flights: PROVIDER_FIXTURE_FLIGHTS,
+        hotels: PROVIDER_FIXTURE_HOTELS,
+      }),
+    },
+  });
+
+  assert.equal(result.selectionRequired, false);
+  assert.equal(result.selectedEvent?.provider, "curated");
+  assert.equal(
+    result.selectedEvent?.providerEventId,
+    "curated-f1-italian-gp-2026"
+  );
+  assert.equal(result.packages.length, 3);
 });

@@ -13,3 +13,14 @@ test("buildEventTripFunnelEvent returns a structured event payload", () => {
   assert.equal(event.payload.packageCount, 3);
   assert.match(event.occurredAt, /^\d{4}-\d{2}-\d{2}T/);
 });
+
+test("buildEventTripFunnelEvent supports event selection required events", () => {
+  const event = buildEventTripFunnelEvent("event_selection_required", {
+    chatId: "chat-456",
+    selectionReason: "ambiguous_curated_fallback",
+  });
+
+  assert.equal(event.event, "event_selection_required");
+  assert.equal(event.payload.chatId, "chat-456");
+  assert.equal(event.payload.selectionReason, "ambiguous_curated_fallback");
+});

@@ -1,6 +1,7 @@
 export type EventTripFunnelEventName =
   | "intent_detected"
   | "follow_up_requested"
+  | "event_selection_required"
   | "packages_generated"
   | "packages_fallback"
   | "outbound_click";
