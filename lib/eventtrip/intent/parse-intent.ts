@@ -91,6 +91,22 @@ function buildIntentExtractionPrompt(text: string): string {
   ].join("\n");
 }
 
+function enrichIntentWithFallback({
+  parsedIntent,
+  fallbackIntent,
+}: {
+  parsedIntent: EventTripIntent;
+  fallbackIntent: EventTripIntent;
+}): EventTripIntent {
+  return {
+    ...fallbackIntent,
+    ...parsedIntent,
+    selectedEventCandidateId:
+      parsedIntent.selectedEventCandidateId ??
+      fallbackIntent.selectedEventCandidateId,
+  };
+}
+
 export async function parseIntentFromText({
   text,
   model,
@@ -175,6 +191,11 @@ export async function parseIntentFromText({
       };
     }
   }
+
+  parsedIntent = enrichIntentWithFallback({
+    parsedIntent,
+    fallbackIntent: extractIntentWithFallback(normalizedText),
+  });
 
   const missingFields = getMissingIntentFields(parsedIntent);
 

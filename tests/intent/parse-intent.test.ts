@@ -161,3 +161,20 @@ test("enriches selectedEventCandidateId from raw text when model omits it", asyn
 
   assert.equal(result.intent.selectedEventCandidateId, "ticketmaster:tm-42");
 });
+
+test("backfills missing model fields from fallback extraction", async () => {
+  const result = await parseIntentFromText({
+    text: "Formula 1 Italy Grand Prix 2026 from Sofia for 2 travelers",
+    model: {} as never,
+    generateObjectFn: createMockGenerateObject({
+      event: "Formula 1 Italy Grand Prix 2026",
+      travelers: 2,
+    }) as never,
+  });
+
+  assert.equal(result.intent.originCity, "Sofia");
+  assert.equal(result.intent.travelers, 2);
+  assert.equal(result.intent.event, "Formula 1 Italy Grand Prix 2026");
+  assert.deepEqual(result.missingFields, ["maxBudgetPerPerson"]);
+  assert.match(result.followUpQuestion ?? "", /max budget per person/i);
+});
