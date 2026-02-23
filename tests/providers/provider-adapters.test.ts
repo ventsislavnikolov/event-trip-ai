@@ -252,6 +252,28 @@ test("maps city names to airport codes for Travelpayouts flights", async () => {
   resetEnv();
 });
 
+test("returns empty flights when Travelpayouts flights endpoint returns 400", async () => {
+  process.env.TRAVELPAYOUTS_API_TOKEN = "tp-token";
+  let requestUrl = "";
+
+  mockFetch((input) => {
+    requestUrl = input;
+    return new Response("Bad Request", { status: 400 });
+  });
+
+  const flights = await fetchTravelPayoutsFlights({
+    originCity: "Sofia",
+    destinationCity: "Berlin",
+    departDate: "2026-09-10",
+    returnDate: "2026-09-15",
+  });
+
+  assert.deepEqual(flights, []);
+  assert.match(requestUrl, /v1\/prices\/cheap/i);
+
+  resetEnv();
+});
+
 test("returns empty hotels when Travelpayouts hotels endpoint returns 404", async () => {
   process.env.TRAVELPAYOUTS_API_TOKEN = "tp-token";
   let requestUrl = "";

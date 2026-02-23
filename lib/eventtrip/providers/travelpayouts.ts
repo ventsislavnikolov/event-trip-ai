@@ -100,6 +100,12 @@ export async function fetchTravelPayoutsFlights(params: {
     cache: "no-store",
   });
 
+  // Flights endpoint can return 400 for unsupported route/date combinations.
+  // Treat that as "no flight offers" instead of a hard provider failure.
+  if (response.status === 400) {
+    return [];
+  }
+
   if (!response.ok) {
     throw new Error(
       `Travelpayouts flights request failed with status ${response.status}`
