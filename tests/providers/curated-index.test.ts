@@ -25,3 +25,16 @@ test("searchCuratedEventIndex keeps top candidate focused on Italy for Italy que
   assert.equal(results.length > 0, true);
   assert.equal(results[0]?.country, "IT");
 });
+
+test("searchCuratedEventIndex does not mix F1 events into Tomorrowland query", async () => {
+  const results = await searchCuratedEventIndex(
+    "Tomorrowland 2026 from Sofia for 2 travelers"
+  );
+
+  assert.equal(results.length > 0, true);
+  assert.equal(results[0]?.id, "curated-tomorrowland-2026");
+  assert.equal(
+    results.some((event) => event.id.startsWith("curated-f1-")),
+    false
+  );
+});

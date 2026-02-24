@@ -103,6 +103,47 @@ function normalize(text: string): string {
     .trim();
 }
 
+const CURATED_QUERY_STOPWORDS = new Set([
+  "trip",
+  "planning",
+  "plan",
+  "travel",
+  "traveler",
+  "travelers",
+  "adult",
+  "adults",
+  "person",
+  "people",
+  "from",
+  "for",
+  "with",
+  "max",
+  "budget",
+  "per",
+  "eur",
+  "euro",
+  "formula",
+  "grand",
+  "prix",
+  "race",
+]);
+
+function isYearToken(token: string): boolean {
+  return /^(19|20)\d{2}$/.test(token);
+}
+
+function toInformativeQueryTokens(value: string): string[] {
+  return normalize(value)
+    .split(" ")
+    .map((token) => token.trim())
+    .filter(
+      (token) =>
+        token.length >= 3 &&
+        !isYearToken(token) &&
+        !CURATED_QUERY_STOPWORDS.has(token)
+    );
+}
+
 function scoreCuratedEventMatch(
   query: string,
   event: CuratedIndexEvent
@@ -126,22 +167,24 @@ function scoreCuratedEventMatch(
     }
   }
 
-  const queryTokens = normalizedQuery
-    .split(" ")
-    .filter((token) => token.length >= 3);
+  const queryTokens = toInformativeQueryTokens(normalizedQuery);
   if (queryTokens.length === 0) {
     return 0;
   }
 
-  let score = 0;
+  let overlapCount = 0;
 
   for (const token of queryTokens) {
     if (candidates.some((candidate) => candidate.includes(token))) {
-      score += 15;
+      overlapCount += 1;
     }
   }
 
-  return score;
+  if (overlapCount === 0) {
+    return 0;
+  }
+
+  return overlapCount * 20;
 }
 
 export function searchCuratedEventIndex(
